@@ -16,3 +16,11 @@ Flags:
   -v, --version   print version and exit
 
 ```
+
+# install
+
+- Linux
+```
+git clone https://github.com/Setheck/dat
+make install
+```
