@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	Version = "v0.0.0"
-	Build   = "2019-11-02T01:23:46-0700"
+	Application = "dat"
+	Version     = "v0.0.0"
+	Build       = "2019-11-02T01:23:46-0700"
 )
 
 const format = "01/02/2006 15:04:05 -0700"
@@ -33,16 +34,16 @@ func (r *RootCommand) ParseFlags() {
 	r.utc = flgs.BoolP("utc", "u", false, "display the epoch in utc")
 }
 
-func (r *RootCommand) InitCmd() {
+func (r *RootCommand) Init() {
 	r.cmd = &cobra.Command{
-		Use: "dat [epoch]",
-		Long: `dat is a simple tool for converting epochs,
+		Use: fmt.Sprint(Application, " [epoch]"),
+		Long: fmt.Sprint(Application, ` is a simple tool for converting epochs,
 when called without arguments dat returns the current epoch.
 Likewise, if an epoch is not given the current epoch is assumed.
-If given an epoch, all formats (epoch, local, utc) will be output.`,
+If given an epoch, all formats (epoch, local, utc) will be output.`),
 		Run: func(cmd *cobra.Command, args []string) {
 			if *r.ver {
-				fmt.Printf("dat - version:%s  build:%s\n", Version, Build)
+				fmt.Printf("%s - version:%s build:%s\n", Application, Version, Build)
 				return
 			}
 			tm := time.Now()
@@ -87,7 +88,7 @@ func (r *RootCommand) Execute() error {
 
 func Execute() {
 	rootCmd := RootCommand{}
-	rootCmd.InitCmd()
+	rootCmd.Init()
 	rootCmd.ParseFlags()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
