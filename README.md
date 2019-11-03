@@ -10,8 +10,10 @@ Usage:
 
 Flags:
   -a, --all       display the epoch in all formats
+  -c, --copy      add output to clipboard
   -h, --help      help for dat
   -l, --local     display the epoch in the local timezone
+  -p, --paste     read input from clipboard
   -u, --utc       display the epoch in utc
   -v, --version   print version and exit
 
