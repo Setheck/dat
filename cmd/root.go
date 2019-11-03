@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -91,17 +90,18 @@ If given an epoch, all formats (epoch, local, utc) will be output.`),
 			if *r.paste {
 				args, err = argsFromClipboard()
 				if err != nil {
-					log.Println(err)
+					fmt.Println(err)
 				}
 			}
 			tm, err := r.parseEpochTime(args, time.Now())
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
+				return
 			}
 			output := r.BuildOutput(tm)
 			if *r.copy {
 				if err := clipboard.WriteAll(output); err != nil {
-					log.Println("failed to copy to clipboard:", err)
+					fmt.Println("failed to copy to clipboard:", err)
 				}
 			}
 			fmt.Print(output)
