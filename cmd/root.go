@@ -40,17 +40,13 @@ func (r *RootCommand) ParseFlags() {
 	r.paste = flgs.BoolP("paste", "p", false, "read input from clipboard")
 }
 
-// parseEpochTime looks at args and attempts to determine the incoming epoch
-func (r *RootCommand) parseEpochTime(args []string, def time.Time) (time.Time, error) {
-	if len(args) > 0 {
-		epoch, err := strconv.ParseInt(args[0], 10, 64)
-		if err != nil {
-			return time.Time{}, fmt.Errorf("not a valid epoch")
-		}
-		*r.all = true
+// ParseEpochTime tries to parse the string as an int, then converts to a time.Time
+func ParseEpochTime(str string) (time.Time, error) {
+	if epoch, err := strconv.ParseInt(str, 10, 64); err != nil {
+		return time.Time{}, fmt.Errorf("%q is not a valid epoch", truncateString(str, 20))
+	} else {
 		return time.Unix(epoch, 0), nil
 	}
-	return def, nil
 }
 
 func (r *RootCommand) BuildOutput(tm time.Time) string {
@@ -81,30 +77,41 @@ func (r *RootCommand) Init() {
 when called without arguments dat returns the current epoch.
 Likewise, if an epoch is not given the current epoch is assumed.
 If given an epoch, all formats (epoch, local, utc) will be output.`),
-		Run: func(cmd *cobra.Command, args []string) {
+		SilenceUsage: true, // prevent usage on error
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if *r.ver {
 				fmt.Printf("%s - version:%s build:%s\n", Application, Version, Build)
-				return
+				return nil
 			}
+
+			// default to now
+			epochstr := strconv.FormatInt(time.Now().Unix(), 10)
+			if len(args) > 0 {
+				epochstr = args[0]
+			}
+
 			var err error
 			if *r.paste {
-				args, err = argsFromClipboard()
+				epochstr, err = ReadFromClipboard()
 				if err != nil {
-					fmt.Println(err)
+					return err
 				}
 			}
-			tm, err := r.parseEpochTime(args, time.Now())
+
+			tm, err := ParseEpochTime(epochstr)
 			if err != nil {
-				fmt.Println(err)
-				return
+				return err
 			}
+
 			output := r.BuildOutput(tm)
 			if *r.copy {
-				if err := clipboard.WriteAll(output); err != nil {
-					fmt.Println("failed to copy to clipboard:", err)
+				if err := writeToClipboard(output); err != nil {
+					return err
 				}
 			}
+
 			fmt.Print(output)
+			return nil
 		},
 	}
 }
@@ -118,18 +125,34 @@ func Execute() {
 	rootCmd.Init()
 	rootCmd.ParseFlags()
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
-// argsFromClipboard is a helper to overwrite the args with the clipboard
+// ReadFromClipboard is a helper to overwrite the args with the clipboard
 // falls back to given args,
-func argsFromClipboard() ([]string, error) {
+func ReadFromClipboard() (string, error) {
 	if in, err := clipboard.ReadAll(); err != nil {
-		return nil, fmt.Errorf("reading from clipboard failed: %v", err)
+		return "", fmt.Errorf("reading from clipboard failed: %v", err)
 	} else {
 		in := strings.TrimSpace(in)
-		return []string{in}, nil
+		return in, nil
 	}
+}
+
+func writeToClipboard(s string) error {
+	if err := clipboard.WriteAll(s); err != nil {
+		fmt.Println("failed to write to clipboard:", err)
+	}
+	return nil
+}
+
+func truncateString(str string, size int) string {
+	if len(str) > size {
+		if size > 3 {
+			size -= 3
+		}
+		return str[0:size] + "..."
+	}
+	return str
 }
