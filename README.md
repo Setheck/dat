@@ -1,6 +1,8 @@
 # dat
-```
+
 ![](https://github.com/setheck/dat/workflows/Go/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/setheck/dat)](https://goreportcard.com/report/github.com/setheck/dat)
+
+```
 dat is a simple tool for converting epochs,
 when called without arguments dat returns the current epoch.
 Likewise, if an epoch is not given the current epoch is assumed.
