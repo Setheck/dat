@@ -40,15 +40,6 @@ func (r *RootCommand) ParseFlags() {
 	r.paste = flgs.BoolP("paste", "p", false, "read input from clipboard")
 }
 
-// ParseEpochTime tries to parse the string as an int, then converts to a time.Time
-func ParseEpochTime(str string) (time.Time, error) {
-	if epoch, err := strconv.ParseInt(str, 10, 64); err != nil {
-		return time.Time{}, fmt.Errorf("%q is not a valid epoch", truncateString(str, 20))
-	} else {
-		return time.Unix(epoch, 0), nil
-	}
-}
-
 func (r *RootCommand) BuildOutput(tm time.Time) string {
 	output := ""
 	switch {
@@ -105,7 +96,7 @@ If given an epoch, all formats (epoch, local, utc) will be output.`),
 
 			output := r.BuildOutput(tm)
 			if *r.copy {
-				if err := writeToClipboard(output); err != nil {
+				if err := WriteToClipboard(output); err != nil {
 					return err
 				}
 			}
@@ -129,6 +120,15 @@ func Execute() {
 	}
 }
 
+// ParseEpochTime tries to parse the string as an int, then converts to a time.Time
+func ParseEpochTime(str string) (time.Time, error) {
+	if epoch, err := strconv.ParseInt(str, 10, 64); err != nil {
+		return time.Time{}, fmt.Errorf("%q is not a valid epoch", TruncateString(str, 20))
+	} else {
+		return time.Unix(epoch, 0), nil
+	}
+}
+
 // ReadFromClipboard is a helper to overwrite the args with the clipboard
 // falls back to given args,
 func ReadFromClipboard() (string, error) {
@@ -140,14 +140,14 @@ func ReadFromClipboard() (string, error) {
 	}
 }
 
-func writeToClipboard(s string) error {
+func WriteToClipboard(s string) error {
 	if err := clipboard.WriteAll(s); err != nil {
 		fmt.Println("failed to write to clipboard:", err)
 	}
 	return nil
 }
 
-func truncateString(str string, size int) string {
+func TruncateString(str string, size int) string {
 	if len(str) > size {
 		if size > 3 {
 			size -= 3
