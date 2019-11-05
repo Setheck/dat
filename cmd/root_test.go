@@ -24,6 +24,31 @@ func ExampleVersion() {
 	// Output: dat - version:v0.0.0 build:2019-11-02T01:23:46-0700
 }
 
+// TODO: in progress
+//func TestRootCommand(t *testing.T) {
+//	clipboard = new(mocks.Clipper)
+//	tests := []struct {
+//		name  string
+//		args  []string
+//		copy  bool
+//		paste bool
+//		want  string
+//	}{
+//		{"", []string{""}, false, false, ""},
+//	}
+//	for _, test := range tests {
+//		t.Run(test.name, func(t *testing.T) {
+//			rc := RootCommand{
+//				ver: &falsePtr,
+//			}
+//			rc.Init()
+//			if err := rc.cmd.RunE(nil, nil); err != nil {
+//				t.Fatal(err)
+//			}
+//		})
+//	}
+//}
+
 func TestRootCommand_BuildOutput(t *testing.T) {
 	tm := time.Now()
 	tmstr := strconv.FormatInt(tm.Unix(), 10)
@@ -80,6 +105,29 @@ func TestParseEpochTime(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, test.want, got)
 			}
+		})
+	}
+}
+
+func TestTruncateString(t *testing.T) {
+	tests := []struct {
+		name string
+		size int
+		want string
+	}{
+		{"", 0, ""},
+		{"", -1, ""},
+		{"no trunc", 10, "no trunc"},
+		{"ab", 1, "a"},
+		{"abc", 2, "ab"},
+		{"abc", 3, "abc"},
+		{"abcd", 3, "..."},
+		{"happy trees", 8, "happy..."},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := TruncateString(test.name, test.size)
+			assert.Equal(t, test.want, got)
 		})
 	}
 }
