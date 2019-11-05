@@ -24,7 +24,6 @@ Flags:
 
 # install
 
-- Linux
 ```
 git clone https://github.com/Setheck/dat
 make install
