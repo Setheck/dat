@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/atotto/clipboard"
+	"github.com/Setheck/dat/util"
+
 	"github.com/spf13/cobra"
 )
 
@@ -18,6 +19,8 @@ var (
 )
 
 const DateFormat = "01/02/2006 15:04:05 -0700"
+
+var clipboard = util.ClipboardHelper
 
 type RootCommand struct {
 	cmd *cobra.Command
@@ -83,7 +86,7 @@ If given an epoch, all formats (epoch, local, utc) will be output.`),
 
 			var err error
 			if *r.paste {
-				epochstr, err = ReadFromClipboard()
+				epochstr, err = clipboard.ReadAll()
 				if err != nil {
 					return err
 				}
@@ -96,7 +99,7 @@ If given an epoch, all formats (epoch, local, utc) will be output.`),
 
 			output := r.BuildOutput(tm)
 			if *r.copy {
-				if err := WriteToClipboard(output); err != nil {
+				if err := clipboard.WriteAll(output); err != nil {
 					return err
 				}
 			}
@@ -122,37 +125,27 @@ func Execute() {
 
 // ParseEpochTime tries to parse the string as an int, then converts to a time.Time
 func ParseEpochTime(str string) (time.Time, error) {
-	if epoch, err := strconv.ParseInt(str, 10, 64); err != nil {
+	if epoch, err := strconv.ParseInt(strings.TrimSpace(str), 10, 64); err != nil {
 		return time.Time{}, fmt.Errorf("%q is not a valid epoch", TruncateString(str, 20))
 	} else {
 		return time.Unix(epoch, 0), nil
 	}
 }
 
-// ReadFromClipboard is a helper to overwrite the args with the clipboard
-// falls back to given args,
-func ReadFromClipboard() (string, error) {
-	if in, err := clipboard.ReadAll(); err != nil {
-		return "", fmt.Errorf("reading from clipboard failed: %v", err)
-	} else {
-		in := strings.TrimSpace(in)
-		return in, nil
-	}
-}
-
-func WriteToClipboard(s string) error {
-	if err := clipboard.WriteAll(s); err != nil {
-		fmt.Println("failed to write to clipboard:", err)
-	}
-	return nil
-}
-
+// TruncateString reduces the size of str to the given size.
+// if str is truncated, it will include a trailing ellipsis.
 func TruncateString(str string, size int) string {
-	if len(str) > size {
-		if size > 3 {
+	if size < 0 {
+		size = 0
+	}
+	length := len(str)
+	postfix := ""
+	if length > size {
+		if length > 3 {
+			postfix = "..."
 			size -= 3
 		}
-		return str[0:size] + "..."
+		return str[0:size] + postfix
 	}
 	return str
 }
