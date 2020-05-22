@@ -2,10 +2,16 @@ BINARY=dat
 VERSION=$(shell git describe --tags)
 BUILD=$(shell date +%FT%T%z)
 
-LDFLAGS=-ldflags "-w -s -X github.com/Setheck/dat/cmd.Application=${BINARY} -X github.com/Setheck/dat/cmd.Version=${VERSION} -X github.com/Setheck/dat/cmd.Build=${BUILD}"
+GOOS?=linux
+CGO_ENABLED?=0
+LDFLAGS=-ldflags "-extldflags '-static' -w -s \
+				-X github.com/Setheck/dat/cmd.Application=${BINARY} \
+				-X github.com/Setheck/dat/cmd.Version=${VERSION} \
+				-X github.com/Setheck/dat/cmd.Build=${BUILD}"
 
 build: test
-	go build ${LDFLAGS} -o ${BINARY}
+	echo "GOOS=$(GOOS) CGO_ENABLED=$(CGO_ENABLED)"
+	go build -a ${LDFLAGS} -o ${BINARY} .
 
 test:
 	go test ./... -race -cover

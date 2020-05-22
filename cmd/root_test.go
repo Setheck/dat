@@ -60,9 +60,9 @@ func TestRootCommand_BuildOutput(t *testing.T) {
 		utc   bool
 		want  string
 	}{
-		{"no flags", tm, false, false, false, tmstr},
-		{"utc", tm, false, false, true, tm.UTC().Format(DateFormat)},
-		{"local", tm, false, true, false, tm.Local().Format(DateFormat)},
+		{"no flags", tm, false, false, false, fmt.Sprintln(tmstr)},
+		{"utc", tm, false, false, true, fmt.Sprintln(tm.UTC().Format(DateFormat))},
+		{"local", tm, false, true, false, fmt.Sprintln(tm.Local().Format(DateFormat))},
 		{"utc and local", tm, false, true, true,
 			fmt.Sprintf("local: %s\n  utc: %s\n",
 				tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},

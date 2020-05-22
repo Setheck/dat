@@ -59,7 +59,7 @@ func (r *RootCommand) BuildOutput(tm time.Time) string {
 		} else if *r.utc {
 			out = tm.UTC().Format(DateFormat)
 		}
-		output = out
+		output = fmt.Sprintln(out)
 	}
 	return output
 }
