@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"regexp"
 	"strconv"
 	"testing"
 	"time"
