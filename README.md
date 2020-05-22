@@ -25,6 +25,6 @@ Flags:
 # install
 
 ```
-git clone https://github.com/Setheck/dat
+git clone git@github.com:Setheck/dat.git
 make install
 ```
