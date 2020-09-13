@@ -16,7 +16,7 @@ builds:
       - darwin
     binary: dat
     id: dat
-    ldflags: -w -s -X github.com/Setheck/dat/cmd.Application={{.ProjectName}} -X github.com/Setheck/dat/cmd.Version={{.Tag}} -X github.com/Setheck/dat/cmd.Build={{.Date}}
+    ldflags: -w -s -X github.com/Setheck/dat/cmd.Application={{.ProjectName}} -X github.com/Setheck/dat/cmd.Version={{.Tag}} -X github.com/Setheck/dat/cmd.Build={{.CommitTimestamp}}
 archives:
   - replacements:
       darwin: Darwin
