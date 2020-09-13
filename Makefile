@@ -33,4 +33,4 @@ install: test
 clean:
 	if [ -f ${BINARY} ] ; then rm ${BINARY} ; fi
 
-.PHONY: clean
+.PHONY: clean install test dbuild deploy
