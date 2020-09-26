@@ -30,6 +30,13 @@ test:
 install: test
 	go install ${LDFLAGS} .
 
+release: RELEASE_VERSION=v$(shell docker run --rm alpine/semver semver -c -i patch $(VERSION))
+release:
+	@echo "Creating Release: $(RELEASE_VERSION)"
+	@echo "tagging..." && git tag -a $(RELEASE_VERSION) -m $(RELEASE_VERSION)
+	@echo "pusing..." && git push origin $(RELEASE_VERSION)
+
+
 clean:
 	if [ -f ${BINARY} ] ; then rm ${BINARY} ; fi
 
