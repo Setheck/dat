@@ -34,7 +34,7 @@ release: RELEASE_VERSION=v$(shell docker run --rm alpine/semver semver -c -i pat
 release:
 	@echo "Creating Release: $(RELEASE_VERSION)"
 	@echo "tagging..." && git tag -a $(RELEASE_VERSION) -m $(RELEASE_VERSION)
-	@echo "pusing..." && git push origin $(RELEASE_VERSION)
+	@echo "pushing..." && git push origin $(RELEASE_VERSION)
 
 
 clean:
