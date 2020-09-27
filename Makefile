@@ -28,6 +28,7 @@ release:
 
 
 clean:
-	if [ -f ${BINARY} ] ; then rm ${BINARY} ; fi
+	@if [ -f ${BINARY} ] ; then echo "Removing ${BINARY}"; rm ${BINARY} ; fi
+	@if [ -d dist ]; then echo "Removing dist/..."; rm -rf dist; fi
 
 .PHONY: clean install test dbuild deploy
