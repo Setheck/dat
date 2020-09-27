@@ -20,12 +20,12 @@ var (
 
 const DateFormat = "01/02/2006 15:04:05 -0700"
 
-var appClipboard = ClipboardHelper
-
 type CobraCommand interface {
 	Execute() error
 	Flags() *pflag.FlagSet
 }
+
+var _ CobraCommand = &cobra.Command{}
 
 type RootCommand struct {
 	cmd CobraCommand
@@ -48,7 +48,7 @@ Likewise, if an epoch is not given the current epoch is assumed.
 If given an epoch, all formats (epoch, local, utc) will be output.`),
 		SilenceUsage: true, // prevent usage on error
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RunInit(rc.Options(), args)
+			return RunE(rc.Options(), args)
 		},
 	}
 	return rc
@@ -84,7 +84,7 @@ var StdOut io.Writer = os.Stdout
 var buildOutput = BuildOutput
 var timeNow = time.Now
 
-func RunInit(opts Options, args []string) error {
+func RunE(opts Options, args []string) error {
 	if opts.Version {
 		_, err := fmt.Fprintf(StdOut, "%s - version:%s build:%s\n", Application, Version, Build)
 		return err
@@ -101,7 +101,7 @@ func RunInit(opts Options, args []string) error {
 	// paste mode reads from the clipboard
 	if opts.Paste {
 		var err error
-		epochstr, err = appClipboard.ReadAll()
+		epochstr, err = ClipboardHelper.ReadAll()
 		if err != nil {
 			return err
 		}
@@ -115,7 +115,7 @@ func RunInit(opts Options, args []string) error {
 
 	output := buildOutput(tm, opts)
 	if opts.Copy {
-		if err := appClipboard.WriteAll(output); err != nil {
+		if err := ClipboardHelper.WriteAll(output); err != nil {
 			return err
 		}
 	}

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spf13/pflag"
+
 	"github.com/Setheck/dat/mocks"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,6 +17,40 @@ func TestNewRootCommand(t *testing.T) {
 	rc := NewRootCommand()
 	assert.NotNil(t, rc)
 	assert.NotNil(t, rc.cmd)
+
+}
+
+func TestRootCommand_ParseFlags(t *testing.T) {
+	fset := &pflag.FlagSet{}
+	mockCommand := new(mocks.CobraCommand)
+	mockCommand.On("Flags").Return(fset)
+	rc := &RootCommand{cmd: mockCommand}
+	rc.ParseFlags()
+	mockCommand.AssertExpectations(t)
+
+	// version
+	assert.NotNil(t, fset.ShorthandLookup("v"))
+	assert.NotNil(t, fset.Lookup("version"))
+
+	// all
+	assert.NotNil(t, fset.ShorthandLookup("a"))
+	assert.NotNil(t, fset.Lookup("all"))
+
+	// local
+	assert.NotNil(t, fset.ShorthandLookup("l"))
+	assert.NotNil(t, fset.Lookup("local"))
+
+	// utc
+	assert.NotNil(t, fset.ShorthandLookup("u"))
+	assert.NotNil(t, fset.Lookup("utc"))
+
+	// copy
+	assert.NotNil(t, fset.ShorthandLookup("c"))
+	assert.NotNil(t, fset.Lookup("copy"))
+
+	// paste
+	assert.NotNil(t, fset.ShorthandLookup("p"))
+	assert.NotNil(t, fset.Lookup("paste"))
 }
 
 func TestRootCommand_Options(t *testing.T) {
@@ -106,12 +142,12 @@ func TestRootCommand_Execute(t *testing.T) {
 }
 
 func TestRunInit(t *testing.T) {
-	saveClipboard := appClipboard
+	saveClipboard := ClipboardHelper
 	saveStdOut := StdOut
 	saveBuildOutput := buildOutput
 	saveTimeNow := timeNow
 	defer func() {
-		appClipboard = saveClipboard
+		ClipboardHelper = saveClipboard
 		StdOut = saveStdOut
 		buildOutput = saveBuildOutput
 		timeNow = saveTimeNow
@@ -152,9 +188,9 @@ func TestRunInit(t *testing.T) {
 			mockClipper := new(mocks.Clipper)
 			mockClipper.On("ReadAll").Return(goodEpoch, test.clipboardErr)
 			mockClipper.On("WriteAll", testOutput).Return(test.clipboardErr)
-			appClipboard = mockClipper
+			ClipboardHelper = mockClipper
 
-			err := RunInit(test.options, test.args)
+			err := RunE(test.options, test.args)
 			if test.clipboardErr != nil || test.epochErr != nil {
 				assert.Error(t, err)
 			} else {
