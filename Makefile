@@ -10,7 +10,7 @@ LDFLAGS=-ldflags "-extldflags '-static' -w -s \
 				-X ${BASE_PKG}.Build=${BUILD}"
 
 build:
-	echo "CGO_ENABLED=$(CGO_ENABLED)"
+	@echo "CGO_ENABLED=$(CGO_ENABLED)"
 	@echo "building ${BINARY} version:${VERSION} build:${BUILD}"
 	@go build -a ${LDFLAGS} -o ${BINARY} .
 
