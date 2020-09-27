@@ -12,6 +12,7 @@
 *.out
 
 # Binary
+dist/
 dat
 
 # Ide

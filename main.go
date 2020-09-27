@@ -1,7 +1,13 @@
 package main
 
-import "github.com/Setheck/dat/cmd"
+import (
+	"os"
+)
 
 func main() {
-	cmd.Execute()
+	rootCmd := NewRootCommand()
+	rootCmd.ParseFlags()
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }

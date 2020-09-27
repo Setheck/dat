@@ -23,7 +23,10 @@ Flags:
 ```
 
 # install
+See [Releases Page](https://github.com/Setheck/dat/releases) for the latest release prebuilt binaries.
 
+Build and install yourself!
+requires [golang](https://golang.org/doc/install)
 ```
 git clone git@github.com:Setheck/dat.git
 make install
