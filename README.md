@@ -1,6 +1,6 @@
 # dat
 
-![](https://github.com/setheck/dat/workflows/Go/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/setheck/dat)](https://goreportcard.com/report/github.com/setheck/dat)
+![Build & Test](https://github.com/Setheck/dat/workflows/Build%20&%20Test/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/setheck/dat)](https://goreportcard.com/report/github.com/setheck/dat)
 
 ```
 dat is a simple tool for converting epochs,
