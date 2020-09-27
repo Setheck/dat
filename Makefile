@@ -1,7 +1,7 @@
 BINARY=dat
 VERSION=$(shell git describe --tags)
 BUILD=$(shell date +%FT%T%z)
-BASE_PKG:=github.com/Setheck/dat/cmd
+BASE_PKG:=main
 
 CGO_ENABLED?=0
 LDFLAGS=-ldflags "-extldflags '-static' -w -s \
