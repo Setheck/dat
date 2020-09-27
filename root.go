@@ -20,6 +20,7 @@ var (
 
 const DateFormat = "01/02/2006 15:04:05 -0700"
 
+// CobraCommand interface for *cobra.Command
 type CobraCommand interface {
 	Execute() error
 	Flags() *pflag.FlagSet
@@ -27,6 +28,7 @@ type CobraCommand interface {
 
 var _ CobraCommand = &cobra.Command{}
 
+// RootCommand root cobra command
 type RootCommand struct {
 	cmd CobraCommand
 
@@ -38,6 +40,7 @@ type RootCommand struct {
 	paste *bool
 }
 
+// NewRootCommand creates a new instance of a RootCommand
 func NewRootCommand() *RootCommand {
 	rc := &RootCommand{}
 	rc.cmd = &cobra.Command{
@@ -54,6 +57,7 @@ If given an epoch, all formats (epoch, local, utc) will be output.`),
 	return rc
 }
 
+// ParseFlags parse and assign flags
 func (r *RootCommand) ParseFlags() {
 	flgs := r.cmd.Flags()
 	r.ver = flgs.BoolP("version", "v", false, "print version and exit")
@@ -64,6 +68,7 @@ func (r *RootCommand) ParseFlags() {
 	r.paste = flgs.BoolP("paste", "p", false, "read input from clipboard")
 }
 
+// Options retrieves command input options
 func (r *RootCommand) Options() Options {
 	return Options{
 		Version: *r.ver,
@@ -75,6 +80,7 @@ func (r *RootCommand) Options() Options {
 	}
 }
 
+// Execute run the command
 func (r *RootCommand) Execute() error {
 	return r.cmd.Execute()
 }
@@ -84,6 +90,7 @@ var StdOut io.Writer = os.Stdout
 var buildOutput = BuildOutput
 var timeNow = time.Now
 
+// RunE is the command run function
 func RunE(opts Options, args []string) error {
 	if opts.Version {
 		_, err := fmt.Fprintf(StdOut, "%s - version:%s build:%s\n", Application, Version, Build)
@@ -124,6 +131,7 @@ func RunE(opts Options, args []string) error {
 	return err
 }
 
+// Options
 type Options struct {
 	Version bool
 	Copy    bool
@@ -133,6 +141,7 @@ type Options struct {
 	UTC     bool
 }
 
+// BuildOutput returns the output of the time for the given options
 func BuildOutput(tm time.Time, opts Options) string {
 	output := ""
 	switch {

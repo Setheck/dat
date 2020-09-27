@@ -4,21 +4,23 @@ import (
 	"github.com/atotto/clipboard"
 )
 
+// Clipper is an interface for the clipboard utility
 type Clipper interface {
 	ReadAll() (string, error)
 	WriteAll(s string) error
 }
 
-var ClipboardHelper Clipper = DefaultClipper{}
+// ClipboardHelper is the main usage point
+var ClipboardHelper Clipper = defaultClipper{}
 
-type DefaultClipper struct{}
+type defaultClipper struct{}
 
-// ReadFromClipboard is a helper to overwrite the args with the clipboard
-// falls back to given args,
-func (c DefaultClipper) ReadAll() (string, error) {
+// ReadAll read all data from the clipboard
+func (c defaultClipper) ReadAll() (string, error) {
 	return clipboard.ReadAll()
 }
 
-func (c DefaultClipper) WriteAll(s string) error {
+// WriteAll write the given string to the clipboard
+func (c defaultClipper) WriteAll(s string) error {
 	return clipboard.WriteAll(s)
 }
