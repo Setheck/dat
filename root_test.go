@@ -64,64 +64,81 @@ func TestRootCommand_Options(t *testing.T) {
 	}{
 		{"version flag",
 			&RootCommand{
-				ver:   &truePtr,
-				local: &falsePtr,
-				utc:   &falsePtr,
-				all:   &falsePtr,
-				copy:  &falsePtr,
-				paste: &falsePtr,
+				ver:          &truePtr,
+				local:        &falsePtr,
+				utc:          &falsePtr,
+				all:          &falsePtr,
+				copy:         &falsePtr,
+				paste:        &falsePtr,
+				milliseconds: &falsePtr,
 			},
 			Options{Version: truePtr}},
 		{"copy flag",
 			&RootCommand{
-				ver:   &falsePtr,
-				local: &falsePtr,
-				utc:   &falsePtr,
-				all:   &falsePtr,
-				copy:  &truePtr,
-				paste: &falsePtr,
+				ver:          &falsePtr,
+				local:        &falsePtr,
+				utc:          &falsePtr,
+				all:          &falsePtr,
+				copy:         &truePtr,
+				paste:        &falsePtr,
+				milliseconds: &falsePtr,
 			},
 			Options{Copy: truePtr}},
 		{"paste flag",
 			&RootCommand{
-				ver:   &falsePtr,
-				local: &falsePtr,
-				utc:   &falsePtr,
-				all:   &falsePtr,
-				copy:  &falsePtr,
-				paste: &truePtr,
+				ver:          &falsePtr,
+				local:        &falsePtr,
+				utc:          &falsePtr,
+				all:          &falsePtr,
+				copy:         &falsePtr,
+				paste:        &truePtr,
+				milliseconds: &falsePtr,
 			},
 			Options{Paste: truePtr}},
 		{"all flag",
 			&RootCommand{
-				ver:   &falsePtr,
-				local: &falsePtr,
-				utc:   &falsePtr,
-				all:   &truePtr,
-				copy:  &falsePtr,
-				paste: &falsePtr,
+				ver:          &falsePtr,
+				local:        &falsePtr,
+				utc:          &falsePtr,
+				all:          &truePtr,
+				copy:         &falsePtr,
+				paste:        &falsePtr,
+				milliseconds: &falsePtr,
 			},
 			Options{All: truePtr}},
 		{"local flag",
 			&RootCommand{
-				ver:   &falsePtr,
-				local: &truePtr,
-				utc:   &falsePtr,
-				all:   &falsePtr,
-				copy:  &falsePtr,
-				paste: &falsePtr,
+				ver:          &falsePtr,
+				local:        &truePtr,
+				utc:          &falsePtr,
+				all:          &falsePtr,
+				copy:         &falsePtr,
+				paste:        &falsePtr,
+				milliseconds: &falsePtr,
 			},
 			Options{Local: truePtr}},
 		{"utc flag",
 			&RootCommand{
-				ver:   &falsePtr,
-				local: &falsePtr,
-				utc:   &truePtr,
-				all:   &falsePtr,
-				copy:  &falsePtr,
-				paste: &falsePtr,
+				ver:          &falsePtr,
+				local:        &falsePtr,
+				utc:          &truePtr,
+				all:          &falsePtr,
+				copy:         &falsePtr,
+				paste:        &falsePtr,
+				milliseconds: &falsePtr,
 			},
 			Options{UTC: truePtr}},
+		{"m flag",
+			&RootCommand{
+				ver:          &falsePtr,
+				local:        &falsePtr,
+				utc:          &falsePtr,
+				all:          &falsePtr,
+				copy:         &falsePtr,
+				paste:        &falsePtr,
+				milliseconds: &truePtr,
+			},
+			Options{Milliseconds: truePtr}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -174,6 +191,7 @@ func TestRunInit(t *testing.T) {
 		{"version", nil, Options{Version: true}, "dat - version:v0.0.0 build:2019-11-02T01:23:46-0700\n", nil, nil},
 		{"no args", nil, Options{}, testOutput, nil, nil},
 		{"with input", []string{goodEpoch}, Options{}, testOutput, nil, nil},
+		{"millisecond input", nil, Options{Milliseconds: true}, testOutput, nil, nil},
 		{"input bad epoch", []string{"asdf"}, Options{}, testOutput, nil, assert.AnError},
 		{"read from clipboard", nil, Options{Paste: true}, testOutput, nil, nil},
 		{"read from clipboard error", nil, Options{Paste: true}, testOutput, assert.AnError, nil},
@@ -203,30 +221,37 @@ func TestRunInit(t *testing.T) {
 func TestRootCommand_BuildOutput(t *testing.T) {
 	tm := time.Now()
 	tmstr := strconv.FormatInt(tm.Unix(), 10)
+	tmstr_ms := strconv.FormatInt(tm.UnixNano()/int64(time.Millisecond), 10)
 	tests := []struct {
-		name  string
-		time  time.Time
-		all   bool
-		local bool
-		utc   bool
-		want  string
+		name         string
+		time         time.Time
+		all          bool
+		local        bool
+		utc          bool
+		milliseconds bool
+		want         string
 	}{
-		{"no flags", tm, false, false, false, fmt.Sprintln(tmstr)},
-		{"utc", tm, false, false, true, fmt.Sprintln(tm.UTC().Format(DateFormat))},
-		{"local", tm, false, true, false, fmt.Sprintln(tm.Local().Format(DateFormat))},
-		{"utc and local", tm, false, true, true,
+		{"no flags", tm, false, false, false, false, fmt.Sprintln(tmstr)},
+		{"milliseconds", tm, false, false, false, true, fmt.Sprintln(tmstr_ms)},
+		{"utc", tm, false, false, true, false, fmt.Sprintln(tm.UTC().Format(DateFormat))},
+		{"local", tm, false, true, false, false, fmt.Sprintln(tm.Local().Format(DateFormat))},
+		{"utc and local", tm, false, true, true, false,
 			fmt.Sprintf("local: %s\n  utc: %s\n",
 				tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
-		{"all", tm, true, false, false,
+		{"all", tm, true, false, false, false,
 			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n",
 				tm.Unix(), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
+		{"ms all", tm, true, false, false, true,
+			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n",
+				tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			opts := Options{
-				All:   test.all,
-				Local: test.local,
-				UTC:   test.utc,
+				All:          test.all,
+				Local:        test.local,
+				UTC:          test.utc,
+				Milliseconds: test.milliseconds,
 			}
 			got := BuildOutput(test.time, opts)
 			assert.Equal(t, test.want, got)
@@ -235,25 +260,29 @@ func TestRootCommand_BuildOutput(t *testing.T) {
 }
 
 func TestParseEpochTime(t *testing.T) {
-	tm := time.Unix(1572762509, 0)
-	tmstr := strconv.FormatInt(tm.Unix(), 10)
+	timeEpoch := int64(1572762509)
+	timeEpochMs := int64(1572762509000)
+	tmstr := strconv.FormatInt(timeEpoch, 10)
+	tmstrMs := strconv.FormatInt(timeEpochMs, 10)
 	tests := []struct {
-		name  string
-		str   string
-		want  time.Time
-		error bool
+		name           string
+		str            string
+		isMilliseconds bool
+		want           time.Time
+		error          bool
 	}{
-		{"can't parse", "qqqqqq", time.Time{}, true},
-		{"parsed", tmstr, tm, false},
+		{"can't parse", "qqqqqq", false, time.Time{}, true},
+		{"parsed", tmstr, false, time.Unix(timeEpoch, 0), false},
+		{"parsed", tmstrMs, true, time.Unix(0, timeEpochMs*int64(time.Millisecond)), false},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, err := ParseEpochTime(test.str)
+			got, err := ParseEpochTime(test.str, test.isMilliseconds)
 			if test.error {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, test.want, got)
+				assert.True(t, test.want.Equal(got), "want:%d got:%d", test.want.UnixNano(), got.UnixNano())
 			}
 		})
 	}

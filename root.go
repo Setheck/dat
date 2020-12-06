@@ -32,12 +32,13 @@ var _ CobraCommand = &cobra.Command{}
 type RootCommand struct {
 	cmd CobraCommand
 
-	ver   *bool
-	local *bool
-	utc   *bool
-	all   *bool
-	copy  *bool
-	paste *bool
+	ver          *bool
+	local        *bool
+	utc          *bool
+	all          *bool
+	copy         *bool
+	paste        *bool
+	milliseconds *bool
 }
 
 // NewRootCommand creates a new instance of a RootCommand
@@ -66,17 +67,19 @@ func (r *RootCommand) ParseFlags() {
 	r.utc = flgs.BoolP("utc", "u", false, "display the epoch in utc")
 	r.copy = flgs.BoolP("copy", "c", false, "add output to clipboard")
 	r.paste = flgs.BoolP("paste", "p", false, "read input from clipboard")
+	r.milliseconds = flgs.BoolP("milliseconds", "m", false, "epochs in milliseconds")
 }
 
 // Options retrieves command input options
 func (r *RootCommand) Options() Options {
 	return Options{
-		Version: *r.ver,
-		Copy:    *r.copy,
-		Paste:   *r.paste,
-		All:     *r.all,
-		Local:   *r.local,
-		UTC:     *r.utc,
+		Version:      *r.ver,
+		Copy:         *r.copy,
+		Paste:        *r.paste,
+		All:          *r.all,
+		Local:        *r.local,
+		UTC:          *r.utc,
+		Milliseconds: *r.milliseconds,
 	}
 }
 
@@ -98,7 +101,11 @@ func RunE(opts Options, args []string) error {
 	}
 
 	// default to now
-	epochstr := strconv.FormatInt(timeNow().Unix(), 10)
+	epocInt := timeNow().Unix()
+	if opts.Milliseconds {
+		epocInt = timeNow().UnixNano() / int64(time.Millisecond)
+	}
+	epochstr := strconv.FormatInt(epocInt, 10)
 
 	// take value passed in
 	if len(args) > 0 {
@@ -115,7 +122,7 @@ func RunE(opts Options, args []string) error {
 	}
 
 	// validate and convert to time
-	tm, err := ParseEpochTime(epochstr)
+	tm, err := ParseEpochTime(epochstr, opts.Milliseconds)
 	if err != nil {
 		return err
 	}
@@ -133,26 +140,33 @@ func RunE(opts Options, args []string) error {
 
 // Options
 type Options struct {
-	Version bool
-	Copy    bool
-	Paste   bool
-	All     bool
-	Local   bool
-	UTC     bool
+	Version      bool
+	Copy         bool
+	Paste        bool
+	All          bool
+	Local        bool
+	UTC          bool
+	Milliseconds bool
 }
 
 // BuildOutput returns the output of the time for the given options
 func BuildOutput(tm time.Time, opts Options) string {
 	output := ""
+
+	intTime := tm.Unix()
+	if opts.Milliseconds {
+		intTime = tm.UnixNano() / int64(time.Millisecond)
+	}
+
 	switch {
 	case opts.All:
-		output += fmt.Sprintln("epoch:", tm.Unix())
+		output += fmt.Sprintln("epoch:", intTime)
 		fallthrough
 	case opts.Local && opts.UTC:
 		output += fmt.Sprintln("local:", tm.Local().Format(DateFormat))
 		output += fmt.Sprintln("  utc:", tm.UTC().Format(DateFormat))
 	default:
-		out := strconv.FormatInt(tm.Unix(), 10)
+		out := strconv.FormatInt(intTime, 10)
 		if opts.Local {
 			out = tm.Local().Format(DateFormat)
 		} else if opts.UTC {
@@ -164,12 +178,17 @@ func BuildOutput(tm time.Time, opts Options) string {
 }
 
 // ParseEpochTime tries to parse the string as an int, then converts to a time.Time
-func ParseEpochTime(str string) (time.Time, error) {
-	if epoch, err := strconv.ParseInt(strings.TrimSpace(str), 10, 64); err != nil {
+func ParseEpochTime(str string, milliseconds bool) (time.Time, error) {
+	epoch, err := strconv.ParseInt(strings.TrimSpace(str), 10, 64)
+	if err != nil {
 		return time.Time{}, fmt.Errorf("%q is not a valid epoch", TruncateString(str, 20))
-	} else {
-		return time.Unix(epoch, 0), nil
 	}
+
+	if milliseconds {
+		return time.Unix(0, epoch*int64(time.Millisecond)), nil
+	}
+
+	return time.Unix(epoch, 0), nil
 }
 
 // TruncateString reduces the size of str to the given size.
