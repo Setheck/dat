@@ -48,8 +48,7 @@ func NewRootCommand() *RootCommand {
 		Use: fmt.Sprint(Application, " [epoch]"),
 		Long: fmt.Sprint(Application, ` is a simple tool for converting epochs,
 when called without arguments dat returns the current epoch.
-Likewise, if an epoch is not given the current epoch is assumed.
-If given an epoch, all formats (epoch, local, utc) will be output.`),
+Likewise, if an epoch is not given the current epoch is assumed.`),
 		SilenceUsage: true, // prevent usage on error
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return RunE(rc.Options(), args)
