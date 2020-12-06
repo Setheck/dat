@@ -100,9 +100,11 @@ func RunE(opts Options, args []string) error {
 	}
 
 	// default to now
-	epocInt := timeNow().Unix()
+	var epocInt int64
 	if opts.Milliseconds {
 		epocInt = timeNow().UnixNano() / int64(time.Millisecond)
+	} else {
+		epocInt = timeNow().Unix()
 	}
 	epochstr := strconv.FormatInt(epocInt, 10)
 
@@ -152,9 +154,11 @@ type Options struct {
 func BuildOutput(tm time.Time, opts Options) string {
 	output := ""
 
-	intTime := tm.Unix()
+	var intTime int64
 	if opts.Milliseconds {
 		intTime = tm.UnixNano() / int64(time.Millisecond)
+	} else {
+		intTime = tm.Unix()
 	}
 
 	switch {
