@@ -188,7 +188,7 @@ func TestRunInit(t *testing.T) {
 		clipboardErr error
 		epochErr     error
 	}{
-		{"version", nil, Options{Version: true}, "dat - version:v0.0.0 build:2019-11-02T01:23:46-0700\n", nil, nil},
+		{"version", nil, Options{Version: true}, fmt.Sprintf("%s\napp: dat\nversion: v0.0.0\nbuilt: 2019-11-02T01:23:46-0700\n", Banner), nil, nil},
 		{"no args", nil, Options{}, testOutput, nil, nil},
 		{"with input", []string{goodEpoch}, Options{}, testOutput, nil, nil},
 		{"millisecond input", nil, Options{Milliseconds: true}, testOutput, nil, nil},

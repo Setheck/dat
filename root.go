@@ -15,7 +15,7 @@ import (
 var (
 	Application = "dat"
 	Version     = "v0.0.0"
-	Build       = "2019-11-02T01:23:46-0700"
+	Built       = "2019-11-02T01:23:46-0700"
 )
 
 const DateFormat = "01/02/2006 15:04:05 -0700"
@@ -92,10 +92,17 @@ var StdOut io.Writer = os.Stdout
 var buildOutput = BuildOutput
 var timeNow = time.Now
 
+var Banner = strings.ReplaceAll(`      _       _   
+     | |     | |  
+   __| | __ _| |_ 
+  / _q |/ _q | __|
+ | (_| | (_| | |_
+  \__,_|\__,_|\__|`, "q", "`")
+
 // RunE is the command run function
 func RunE(opts Options, args []string) error {
 	if opts.Version {
-		_, err := fmt.Fprintf(StdOut, "%s - version:%s build:%s\n", Application, Version, Build)
+		_, err := fmt.Fprintf(StdOut, "%s\napp: %s\nversion: %s\nbuilt: %s\n", Banner, Application, Version, Built)
 		return err
 	}
 
