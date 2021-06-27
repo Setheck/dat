@@ -102,8 +102,11 @@ var Banner = strings.ReplaceAll(`      _       _
 // RunE is the command run function
 func RunE(opts Options, args []string) error {
 	if opts.Version {
-		_, err := fmt.Fprintf(StdOut, "%s\napp: %s\nversion: %s\nbuilt: %s\n", Banner, Application, Version, Built)
-		return err
+		fmt.Fprintln(StdOut, Banner)
+		fmt.Fprintln(StdOut, "app:    ", Application)
+		fmt.Fprintln(StdOut, "version:", Version)
+		fmt.Fprintln(StdOut, "built:  ", Built)
+		return nil
 	}
 
 	// default to now
