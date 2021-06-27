@@ -15,7 +15,7 @@ import (
 var (
 	Application = "dat"
 	Version     = "v0.0.0"
-	Build       = "2019-11-02T01:23:46-0700"
+	Built       = "2019-11-02T01:23:46-0700"
 )
 
 const DateFormat = "01/02/2006 15:04:05 -0700"
@@ -39,6 +39,7 @@ type RootCommand struct {
 	copy         *bool
 	paste        *bool
 	milliseconds *bool
+	format       *string
 }
 
 // NewRootCommand creates a new instance of a RootCommand
@@ -67,6 +68,7 @@ func (r *RootCommand) ParseFlags() {
 	r.copy = flgs.BoolP("copy", "c", false, "add output to clipboard")
 	r.paste = flgs.BoolP("paste", "p", false, "read input from clipboard")
 	r.milliseconds = flgs.BoolP("milliseconds", "m", false, "epochs in milliseconds")
+	r.format = flgs.StringP("format", "f", "", "https://golang.org/pkg/time/ format for time output including constant names.")
 }
 
 // Options retrieves command input options
@@ -79,6 +81,7 @@ func (r *RootCommand) Options() Options {
 		Local:        *r.local,
 		UTC:          *r.utc,
 		Milliseconds: *r.milliseconds,
+		Format:       *r.format,
 	}
 }
 
@@ -92,11 +95,21 @@ var StdOut io.Writer = os.Stdout
 var buildOutput = BuildOutput
 var timeNow = time.Now
 
+var Banner = strings.ReplaceAll(`      _       _   
+     | |     | |  
+   __| | __ _| |_ 
+  / _q |/ _q | __|
+ | (_| | (_| | |_
+  \__,_|\__,_|\__|`, "q", "`")
+
 // RunE is the command run function
 func RunE(opts Options, args []string) error {
 	if opts.Version {
-		_, err := fmt.Fprintf(StdOut, "%s - version:%s build:%s\n", Application, Version, Build)
-		return err
+		fmt.Fprintln(StdOut, Banner)
+		fmt.Fprintln(StdOut, "app:    ", Application)
+		fmt.Fprintln(StdOut, "version:", Version)
+		fmt.Fprintln(StdOut, "built:  ", Built)
+		return nil
 	}
 
 	// default to now
@@ -148,6 +161,7 @@ type Options struct {
 	Local        bool
 	UTC          bool
 	Milliseconds bool
+	Format       string
 }
 
 // BuildOutput returns the output of the time for the given options
@@ -161,23 +175,66 @@ func BuildOutput(tm time.Time, opts Options) string {
 		intTime = tm.Unix()
 	}
 
+	outFormat := DateFormat
+	if opts.Format != "" {
+		outFormat = opts.Format
+	}
+
 	switch {
 	case opts.All:
 		output += fmt.Sprintln("epoch:", intTime)
 		fallthrough
 	case opts.Local && opts.UTC:
-		output += fmt.Sprintln("local:", tm.Local().Format(DateFormat))
-		output += fmt.Sprintln("  utc:", tm.UTC().Format(DateFormat))
+		output += fmt.Sprintln("local:", FormatOutput(tm.Local(), outFormat))
+		output += fmt.Sprintln("  utc:", FormatOutput(tm.UTC(), outFormat))
 	default:
 		out := strconv.FormatInt(intTime, 10)
 		if opts.Local {
-			out = tm.Local().Format(DateFormat)
+			out = FormatOutput(tm.Local(), outFormat)
 		} else if opts.UTC {
-			out = tm.UTC().Format(DateFormat)
+			out = FormatOutput(tm.UTC(), outFormat)
 		}
 		output = fmt.Sprintln(out)
 	}
 	return output
+}
+
+func FormatOutput(tm time.Time, outFmtS string) string {
+	outFmt := outFmtS
+	switch strings.ToLower(outFmtS) {
+	case "ansic":
+		outFmt = time.ANSIC
+	case "unixdate":
+		outFmt = time.UnixDate
+	case "rubydate":
+		outFmt = time.RubyDate
+	case "rfc822":
+		outFmt = time.RFC822
+	case "rfc822z":
+		outFmt = time.RFC822Z
+	case "rfc850":
+		outFmt = time.RFC850
+	case "rfc1123":
+		outFmt = time.RFC1123
+	case "rfc1123z":
+		outFmt = time.RFC1123Z
+	case "rfc3339":
+		outFmt = time.RFC3339
+	case "rfc3339nano":
+		outFmt = time.RFC3339Nano
+	case "kitchen":
+		outFmt = time.Kitchen
+	case "stamp":
+		outFmt = time.Stamp
+	case "stampmilli":
+		outFmt = time.StampMilli
+	case "stampmicro":
+		outFmt = time.StampMicro
+	case "stampnano":
+		outFmt = time.StampNano
+	}
+
+	return tm.Format(outFmt)
 }
 
 // ParseEpochTime tries to parse the string as an int, then converts to a time.Time

@@ -1,17 +1,17 @@
 BINARY=dat
 VERSION=$(shell git describe --tags)
-BUILD=$(shell date +%FT%T%z)
+BUILT=$(shell date +%FT%T%z)
 BASE_PKG:=main
 
 CGO_ENABLED?=0
 LDFLAGS=-ldflags "-extldflags '-static' -w -s \
 				-X ${BASE_PKG}.Application=${BINARY} \
 				-X ${BASE_PKG}.Version=${VERSION} \
-				-X ${BASE_PKG}.Build=${BUILD}"
+				-X ${BASE_PKG}.Built=${BUILT}"
 
 build:
 	@echo "CGO_ENABLED=$(CGO_ENABLED)"
-	@echo "building ${BINARY} version:${VERSION} build:${BUILD}"
+	@echo "building ${BINARY} version:${VERSION} built:${BUILT}"
 	@go build -a ${LDFLAGS} -o ${BINARY} .
 
 test:
