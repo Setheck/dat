@@ -166,11 +166,6 @@ func RunE(opts options, args []string) error {
 		return err
 	}
 
-	// add delta if applicable.
-	if opts.Delta != "" {
-		tm = AddDelta(tm, opts.Delta)
-	}
-
 	output := buildOutput(tm, opts)
 	if opts.Copy {
 		if err := ClipboardHelper.WriteAll(output); err != nil {
@@ -185,6 +180,11 @@ func RunE(opts options, args []string) error {
 // BuildOutput returns the output of the time for the given options
 func BuildOutput(tm time.Time, opts options) string {
 	output := ""
+
+	// add delta if applicable.
+	if opts.Delta != "" {
+		tm = AddDelta(tm, opts.Delta)
+	}
 
 	var intTime int64
 	if opts.Milliseconds {
@@ -231,6 +231,8 @@ func BuildOutput(tm time.Time, opts options) string {
 			out = FormatOutput(tm.Local(), outFormat)
 		} else if opts.UTC {
 			out = FormatOutput(tm.UTC(), outFormat)
+		} else if opts.Format != "" {
+			out = FormatOutput(tm, outFormat)
 		} else if formattedZone != "" {
 			out = formattedZone
 		}

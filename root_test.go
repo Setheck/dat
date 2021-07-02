@@ -299,65 +299,57 @@ func TestRunInit(t *testing.T) {
 func TestRootCommand_BuildOutput(t *testing.T) {
 	tm := time.Now()
 	tmStr := strconv.FormatInt(tm.Unix(), 10)
+	tmStrPlus100h := strconv.FormatInt(tm.Add(100*time.Hour).Unix(), 10)
+	tmStrMinus100h := strconv.FormatInt(tm.Add(-100*time.Hour).Unix(), 10)
 	tmStrMillis := strconv.FormatInt(tm.UnixNano()/int64(time.Millisecond), 10)
 	laZone, err := time.LoadLocation(tzLosAngeles)
 	if err != nil {
 		t.Fatal(err)
 	}
 	tests := []struct {
-		name         string
-		time         time.Time
-		all          bool
-		local        bool
-		utc          bool
-		milliseconds bool
-		zone         string
-		format       string
-		want         string
+		name    string
+		time    time.Time
+		options options
+		want    string
 	}{
-		{"no flags", tm, false, false, false, false, "", "", fmt.Sprintln(tmStr)},
-		{"milliseconds", tm, false, false, false, true, "", "", fmt.Sprintln(tmStrMillis)},
-		{"utc", tm, false, false, true, false, "", "", fmt.Sprintln(tm.UTC().Format(DateFormat))},
-		{"utc and zone", tm, false, false, true, false, tzLosAngeles, "",
-			fmt.Sprintf("  utc: %s\n zone: %s\n",
-				tm.UTC().Format(DateFormat), tm.In(laZone).Format(DateFormat))},
-		{"local", tm, false, true, false, false, "", "", fmt.Sprintln(tm.Local().Format(DateFormat))},
-		{"local and zone", tm, false, true, false, false, tzLosAngeles, "",
-			fmt.Sprintf("local: %s\n zone: %s\n",
-				tm.Local().Format(DateFormat), tm.In(laZone).Format(DateFormat))},
-		{"utc and local", tm, false, true, true, false,
-			"", "", fmt.Sprintf("local: %s\n  utc: %s\n",
-				tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
-		{"all", tm, true, false, false, false, "", "",
-			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n",
-				tm.Unix(), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
-		{"all with zone", tm, true, false, false, false, tzLosAngeles, "",
-			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n zone: %s\n",
-				tm.Unix(), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat), tm.In(laZone).Format(DateFormat))},
-		{"ms all", tm, true, false, false, true, "", "",
-			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n",
-				tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
-		{"ms all with zone", tm, true, false, false, true, tzLosAngeles, "",
-			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n zone: %s\n",
-				tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat), tm.In(laZone).Format(DateFormat))},
-		{"ms all with format", tm, true, false, false, true, "", "rfc3339",
-			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n",
-				tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(time.RFC3339), tm.UTC().Format(time.RFC3339))},
-		{"ms all with format and zone", tm, true, false, false, true, tzLosAngeles, "rfc3339",
-			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n zone: %s\n",
-				tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(time.RFC3339), tm.UTC().Format(time.RFC3339), tm.In(laZone).Format(time.RFC3339))},
+		{"no flags", tm, options{},
+			fmt.Sprintln(tmStr)},
+		{"delta +100h", tm, options{Delta: "100h"},
+			fmt.Sprintln(tmStrPlus100h)},
+		{"delta -100h", tm, options{Delta: "-100h"},
+			fmt.Sprintln(tmStrMinus100h)},
+		{"milliseconds", tm, options{Milliseconds: true},
+			fmt.Sprintln(tmStrMillis)},
+		{"format", tm, options{Format: "rfc3339"},
+			fmt.Sprintln(tm.Format(time.RFC3339))},
+		{"zone", tm, options{Zone: tzLosAngeles},
+			fmt.Sprintln(tm.In(laZone).Format(DateFormat))},
+		{"utc", tm, options{UTC: true},
+			fmt.Sprintln(tm.UTC().Format(DateFormat))},
+		{"utc and zone", tm, options{UTC: true, Zone: tzLosAngeles},
+			fmt.Sprintf("  utc: %s\n zone: %s\n", tm.UTC().Format(DateFormat), tm.In(laZone).Format(DateFormat))},
+		{"local", tm, options{Local: true},
+			fmt.Sprintln(tm.Local().Format(DateFormat))},
+		{"local and zone", tm, options{Local: true, Zone: tzLosAngeles},
+			fmt.Sprintf("local: %s\n zone: %s\n", tm.Local().Format(DateFormat), tm.In(laZone).Format(DateFormat))},
+		{"utc and local", tm, options{Local: true, UTC: true},
+			fmt.Sprintf("local: %s\n  utc: %s\n", tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
+		{"all", tm, options{All: true},
+			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n", tm.Unix(), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
+		{"all with zone", tm, options{All: true, Zone: tzLosAngeles},
+			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n zone: %s\n", tm.Unix(), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat), tm.In(laZone).Format(DateFormat))},
+		{"ms all", tm, options{Milliseconds: true, All: true},
+			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n", tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
+		{"ms all with zone", tm, options{Milliseconds: true, All: true, Zone: tzLosAngeles},
+			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n zone: %s\n", tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat), tm.In(laZone).Format(DateFormat))},
+		{"ms all with format", tm, options{Milliseconds: true, All: true, Format: "rfc3339"},
+			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n", tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(time.RFC3339), tm.UTC().Format(time.RFC3339))},
+		{"ms all with format and zone", tm, options{Milliseconds: true, All: true, Zone: tzLosAngeles, Format: "rfc3339"},
+			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n zone: %s\n", tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(time.RFC3339), tm.UTC().Format(time.RFC3339), tm.In(laZone).Format(time.RFC3339))},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			opts := options{
-				All:          test.all,
-				Local:        test.local,
-				UTC:          test.utc,
-				Milliseconds: test.milliseconds,
-				Zone:         test.zone,
-				Format:       test.format,
-			}
-			got := BuildOutput(test.time, opts)
+			got := BuildOutput(test.time, test.options)
 			assert.Equal(t, test.want, got)
 		})
 	}
