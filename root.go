@@ -13,9 +13,12 @@ import (
 )
 
 var (
+	// Application name
 	Application = "dat"
-	Version     = "v0.0.0"
-	Built       = "2019-11-02T01:23:46-0700"
+	// Version stamp
+	Version = "v0.0.0"
+	// Built date/time
+	Built = "2019-11-02T01:23:46-0700"
 )
 
 const DateFormat = "01/02/2006 15:04:05 -0700"
@@ -40,6 +43,22 @@ type RootCommand struct {
 	paste        *bool
 	milliseconds *bool
 	format       *string
+	delta        *string
+	zone         *string
+}
+
+// options
+type options struct {
+	Version      bool
+	Copy         bool
+	Paste        bool
+	All          bool
+	Local        bool
+	UTC          bool
+	Milliseconds bool
+	Format       string
+	Delta        string
+	Zone         string
 }
 
 // NewRootCommand creates a new instance of a RootCommand
@@ -52,7 +71,7 @@ when called without arguments dat returns the current epoch.
 Likewise, if an epoch is not given the current epoch is assumed.`),
 		SilenceUsage: true, // prevent usage on error
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RunE(rc.Options(), args)
+			return RunE(rc.options(), args)
 		},
 	}
 	return rc
@@ -62,18 +81,20 @@ Likewise, if an epoch is not given the current epoch is assumed.`),
 func (r *RootCommand) ParseFlags() {
 	flgs := r.cmd.Flags()
 	r.ver = flgs.BoolP("version", "v", false, "print version and exit")
-	r.all = flgs.BoolP("all", "a", false, "display the epoch in all formats")
-	r.local = flgs.BoolP("local", "l", false, "display the epoch in the local timezone")
-	r.utc = flgs.BoolP("utc", "u", false, "display the epoch in utc")
-	r.copy = flgs.BoolP("copy", "c", false, "add output to clipboard")
-	r.paste = flgs.BoolP("paste", "p", false, "read input from clipboard")
+	r.all = flgs.BoolP("all", "a", false, "display the epoch and formatted local and utc values of the epoch")
+	r.local = flgs.BoolP("local", "l", false, "display the formatted epoch in the local timezone")
+	r.utc = flgs.BoolP("utc", "u", false, "display the formatted epoch in the utc timezone")
+	r.copy = flgs.BoolP("copy", "c", false, "copy output to the clipboard")
+	r.paste = flgs.BoolP("paste", "p", false, "read input from the clipboard")
 	r.milliseconds = flgs.BoolP("milliseconds", "m", false, "epochs in milliseconds")
-	r.format = flgs.StringP("format", "f", "", "https://golang.org/pkg/time/ format for time output including constant names.")
+	r.format = flgs.StringP("format", "f", "", "https://golang.org/pkg/time/ format for time output including constant names")
+	r.delta = flgs.StringP("delta", "d", "", "a duration in which to modify the epoch (ex:+2h3s) see https://golang.org/pkg/time/#ParseDuration")
+	r.zone = flgs.StringP("zone", "z", "", "display a specific time zone by tz database name see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones")
 }
 
-// Options retrieves command input options
-func (r *RootCommand) Options() Options {
-	return Options{
+// options retrieves command input options
+func (r *RootCommand) options() options {
+	return options{
 		Version:      *r.ver,
 		Copy:         *r.copy,
 		Paste:        *r.paste,
@@ -82,6 +103,8 @@ func (r *RootCommand) Options() Options {
 		UTC:          *r.utc,
 		Milliseconds: *r.milliseconds,
 		Format:       *r.format,
+		Delta:        *r.delta,
+		Zone:         *r.zone,
 	}
 }
 
@@ -91,11 +114,12 @@ func (r *RootCommand) Execute() error {
 }
 
 // test points
-var StdOut io.Writer = os.Stdout
+var stdOut io.Writer = os.Stdout
 var buildOutput = BuildOutput
+
 var timeNow = time.Now
 
-var Banner = strings.ReplaceAll(`      _       _   
+var banner = strings.ReplaceAll(`      _       _   
      | |     | |  
    __| | __ _| |_ 
   / _q |/ _q | __|
@@ -103,21 +127,22 @@ var Banner = strings.ReplaceAll(`      _       _
   \__,_|\__,_|\__|`, "q", "`")
 
 // RunE is the command run function
-func RunE(opts Options, args []string) error {
+func RunE(opts options, args []string) error {
 	if opts.Version {
-		fmt.Fprintln(StdOut, Banner)
-		fmt.Fprintln(StdOut, "app:    ", Application)
-		fmt.Fprintln(StdOut, "version:", Version)
-		fmt.Fprintln(StdOut, "built:  ", Built)
+		fmt.Fprintln(stdOut, banner)
+		fmt.Fprintln(stdOut, "app:    ", Application)
+		fmt.Fprintln(stdOut, "version:", Version)
+		fmt.Fprintln(stdOut, "built:  ", Built)
 		return nil
 	}
 
 	// default to now
 	var epocInt int64
+	epoch := timeNow()
 	if opts.Milliseconds {
-		epocInt = timeNow().UnixNano() / int64(time.Millisecond)
+		epocInt = epoch.UnixNano() / int64(time.Millisecond)
 	} else {
-		epocInt = timeNow().Unix()
+		epocInt = epoch.Unix()
 	}
 	epochstr := strconv.FormatInt(epocInt, 10)
 
@@ -143,30 +168,23 @@ func RunE(opts Options, args []string) error {
 
 	output := buildOutput(tm, opts)
 	if opts.Copy {
-		if err := ClipboardHelper.WriteAll(output); err != nil {
+		if err := ClipboardHelper.WriteAll(strings.TrimSpace(output)); err != nil {
 			return err
 		}
 	}
 
-	_, err = fmt.Fprint(StdOut, output)
+	_, err = fmt.Fprint(stdOut, output)
 	return err
 }
 
-// Options
-type Options struct {
-	Version      bool
-	Copy         bool
-	Paste        bool
-	All          bool
-	Local        bool
-	UTC          bool
-	Milliseconds bool
-	Format       string
-}
-
 // BuildOutput returns the output of the time for the given options
-func BuildOutput(tm time.Time, opts Options) string {
+func BuildOutput(tm time.Time, opts options) string {
 	output := ""
+
+	// add delta if applicable.
+	if opts.Delta != "" {
+		tm = AddDelta(tm, opts.Delta)
+	}
 
 	var intTime int64
 	if opts.Milliseconds {
@@ -180,6 +198,14 @@ func BuildOutput(tm time.Time, opts Options) string {
 		outFormat = opts.Format
 	}
 
+	var formattedZone string
+	if opts.Zone != "" {
+		loc, err := time.LoadLocation(opts.Zone)
+		if err == nil {
+			formattedZone = FormatOutput(tm.In(loc), outFormat)
+		}
+	}
+
 	switch {
 	case opts.All:
 		output += fmt.Sprintln("epoch:", intTime)
@@ -187,18 +213,46 @@ func BuildOutput(tm time.Time, opts Options) string {
 	case opts.Local && opts.UTC:
 		output += fmt.Sprintln("local:", FormatOutput(tm.Local(), outFormat))
 		output += fmt.Sprintln("  utc:", FormatOutput(tm.UTC(), outFormat))
+		if formattedZone != "" {
+			output += fmt.Sprintln(" zone:", formattedZone)
+		}
+
+	case opts.Local && formattedZone != "":
+		output += fmt.Sprintln("local:", FormatOutput(tm.Local(), outFormat))
+		output += fmt.Sprintln(" zone:", formattedZone)
+
+	case opts.UTC && formattedZone != "":
+		output += fmt.Sprintln("  utc:", FormatOutput(tm.UTC(), outFormat))
+		output += fmt.Sprintln(" zone:", formattedZone)
+
 	default:
 		out := strconv.FormatInt(intTime, 10)
 		if opts.Local {
 			out = FormatOutput(tm.Local(), outFormat)
 		} else if opts.UTC {
 			out = FormatOutput(tm.UTC(), outFormat)
+		} else if opts.Format != "" {
+			out = FormatOutput(tm, outFormat)
+		} else if formattedZone != "" {
+			out = formattedZone
 		}
 		output = fmt.Sprintln(out)
 	}
+
 	return output
 }
 
+// AddDelta simply adds the given duration if it is valid to the given time, ignores otherwise.
+func AddDelta(tm time.Time, delta string) time.Time {
+	dur, err := time.ParseDuration(delta)
+	if err == nil {
+		tm = tm.Add(dur)
+	}
+	return tm
+}
+
+// FormatOutput parses the provided time against the provided format string.
+// replacing named constants with the expected format.
 func FormatOutput(tm time.Time, outFmtS string) string {
 	outFmt := outFmtS
 	switch strings.ToLower(outFmtS) {
@@ -232,6 +286,11 @@ func FormatOutput(tm time.Time, outFmtS string) string {
 		outFmt = time.StampMicro
 	case "stampnano":
 		outFmt = time.StampNano
+	}
+
+	formattedTime := tm.Format(outFmt)
+	if formattedTime == outFmt {
+		outFmt = DateFormat
 	}
 
 	return tm.Format(outFmt)
