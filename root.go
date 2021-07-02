@@ -168,7 +168,7 @@ func RunE(opts options, args []string) error {
 
 	output := buildOutput(tm, opts)
 	if opts.Copy {
-		if err := ClipboardHelper.WriteAll(output); err != nil {
+		if err := ClipboardHelper.WriteAll(strings.TrimSpace(output)); err != nil {
 			return err
 		}
 	}
