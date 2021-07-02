@@ -43,6 +43,7 @@ type RootCommand struct {
 	paste        *bool
 	milliseconds *bool
 	format       *string
+	delta        *string
 }
 
 // NewRootCommand creates a new instance of a RootCommand
@@ -72,6 +73,7 @@ func (r *RootCommand) ParseFlags() {
 	r.paste = flgs.BoolP("paste", "p", false, "read input from clipboard")
 	r.milliseconds = flgs.BoolP("milliseconds", "m", false, "epochs in milliseconds")
 	r.format = flgs.StringP("format", "f", "", "https://golang.org/pkg/time/ format for time output including constant names.")
+	r.delta = flgs.StringP("delta", "d", "", "a duration in which to modify the epoch ex:+2h3s.")
 }
 
 // options retrieves command input options
@@ -85,6 +87,7 @@ func (r *RootCommand) Options() options {
 		UTC:          *r.utc,
 		Milliseconds: *r.milliseconds,
 		Format:       *r.format,
+		Delta:        *r.delta,
 	}
 }
 
@@ -117,10 +120,11 @@ func RunE(opts options, args []string) error {
 
 	// default to now
 	var epocInt int64
+	epoch := timeNow()
 	if opts.Milliseconds {
-		epocInt = timeNow().UnixNano() / int64(time.Millisecond)
+		epocInt = epoch.UnixNano() / int64(time.Millisecond)
 	} else {
-		epocInt = timeNow().Unix()
+		epocInt = epoch.Unix()
 	}
 	epochstr := strconv.FormatInt(epocInt, 10)
 
@@ -144,6 +148,11 @@ func RunE(opts options, args []string) error {
 		return err
 	}
 
+	// add delta if applicable.
+	if opts.Delta != "" {
+		tm = AddDelta(tm, opts.Delta)
+	}
+
 	output := buildOutput(tm, opts)
 	if opts.Copy {
 		if err := ClipboardHelper.WriteAll(output); err != nil {
@@ -165,6 +174,7 @@ type options struct {
 	UTC          bool
 	Milliseconds bool
 	Format       string
+	Delta        string
 }
 
 // BuildOutput returns the output of the time for the given options
@@ -200,6 +210,15 @@ func BuildOutput(tm time.Time, opts options) string {
 		output = fmt.Sprintln(out)
 	}
 	return output
+}
+
+// AddDelta simply adds the given duration if it is valid to the given time, ignores otherwise.
+func AddDelta(tm time.Time, delta string) time.Time {
+	dur, err := time.ParseDuration(delta)
+	if err == nil {
+		tm = tm.Add(dur)
+	}
+	return tm
 }
 
 // FormatOutput parses the provided time against the provided format string.

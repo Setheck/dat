@@ -54,6 +54,10 @@ func TestRootCommand_ParseFlags(t *testing.T) {
 	// format
 	assert.NotNil(t, fset.ShorthandLookup("f"))
 	assert.NotNil(t, fset.Lookup("format"))
+
+	// delta
+	assert.NotNil(t, fset.ShorthandLookup("d"))
+	assert.NotNil(t, fset.Lookup("delta"))
 }
 
 func TestRootCommand_Options(t *testing.T) {
@@ -75,6 +79,7 @@ func TestRootCommand_Options(t *testing.T) {
 				paste:        &falsePtr,
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
+				delta:        StfPtr(t, ""),
 			},
 			options{Version: truePtr}},
 		{"copy flag",
@@ -87,6 +92,7 @@ func TestRootCommand_Options(t *testing.T) {
 				paste:        &falsePtr,
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
+				delta:        StfPtr(t, ""),
 			},
 			options{Copy: truePtr}},
 		{"paste flag",
@@ -99,6 +105,7 @@ func TestRootCommand_Options(t *testing.T) {
 				paste:        &truePtr,
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
+				delta:        StfPtr(t, ""),
 			},
 			options{Paste: truePtr}},
 		{"all flag",
@@ -111,6 +118,7 @@ func TestRootCommand_Options(t *testing.T) {
 				paste:        &falsePtr,
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
+				delta:        StfPtr(t, ""),
 			},
 			options{All: truePtr}},
 		{"local flag",
@@ -123,6 +131,7 @@ func TestRootCommand_Options(t *testing.T) {
 				paste:        &falsePtr,
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
+				delta:        StfPtr(t, ""),
 			},
 			options{Local: truePtr}},
 		{"utc flag",
@@ -135,6 +144,7 @@ func TestRootCommand_Options(t *testing.T) {
 				paste:        &falsePtr,
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
+				delta:        StfPtr(t, ""),
 			},
 			options{UTC: truePtr}},
 		{"m flag",
@@ -147,6 +157,7 @@ func TestRootCommand_Options(t *testing.T) {
 				paste:        &falsePtr,
 				milliseconds: &truePtr,
 				format:       StfPtr(t, ""),
+				delta:        StfPtr(t, ""),
 			},
 			options{Milliseconds: truePtr}},
 		{"f flag",
@@ -159,8 +170,22 @@ func TestRootCommand_Options(t *testing.T) {
 				paste:        &falsePtr,
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, time.RFC3339),
+				delta:        StfPtr(t, ""),
 			},
 			options{Format: time.RFC3339}},
+		{"d flag",
+			&RootCommand{
+				ver:          &falsePtr,
+				local:        &falsePtr,
+				utc:          &falsePtr,
+				all:          &falsePtr,
+				copy:         &falsePtr,
+				paste:        &falsePtr,
+				milliseconds: &falsePtr,
+				format:       StfPtr(t, ""),
+				delta:        StfPtr(t, "360h10m"),
+			},
+			options{Delta: "360h10m"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -374,6 +399,25 @@ func TestFormatOutput(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			got := FormatOutput(test.time, test.format)
 			assert.Equal(t, got, test.want)
+		})
+	}
+}
+
+func TestAddDelta(t *testing.T) {
+	tests := []struct {
+		name         string
+		time         time.Time
+		delta        string
+		expectedTime time.Time
+	}{
+		{"no delta, no addition", time.Unix(1625211007, 0), "", time.Unix(1625211007, 0)},
+		{"adding 300h2m", time.Unix(1625211007, 0), "300h2m", time.Unix(1626291127, 0)},
+		{"subtracting 300h2m", time.Unix(1625211007, 0), "-300h2m", time.Unix(1624130887, 0)},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := AddDelta(test.time, test.delta)
+			assert.Equal(t, test.expectedTime, got)
 		})
 	}
 }
