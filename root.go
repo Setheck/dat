@@ -81,15 +81,15 @@ Likewise, if an epoch is not given the current epoch is assumed.`),
 func (r *RootCommand) ParseFlags() {
 	flgs := r.cmd.Flags()
 	r.ver = flgs.BoolP("version", "v", false, "print version and exit")
-	r.all = flgs.BoolP("all", "a", false, "display the epoch in all formats")
-	r.local = flgs.BoolP("local", "l", false, "display the epoch in the local timezone")
-	r.utc = flgs.BoolP("utc", "u", false, "display the epoch in utc")
-	r.copy = flgs.BoolP("copy", "c", false, "add output to clipboard")
-	r.paste = flgs.BoolP("paste", "p", false, "read input from clipboard")
+	r.all = flgs.BoolP("all", "a", false, "display the epoch and formatted local and utc values of the epoch")
+	r.local = flgs.BoolP("local", "l", false, "display the formatted epoch in the local timezone")
+	r.utc = flgs.BoolP("utc", "u", false, "display the formatted epoch in the utc timezone")
+	r.copy = flgs.BoolP("copy", "c", false, "copy output to the clipboard")
+	r.paste = flgs.BoolP("paste", "p", false, "read input from the clipboard")
 	r.milliseconds = flgs.BoolP("milliseconds", "m", false, "epochs in milliseconds")
 	r.format = flgs.StringP("format", "f", "", "https://golang.org/pkg/time/ format for time output including constant names")
-	r.delta = flgs.StringP("delta", "d", "", "a duration in which to modify the epoch ex:+2h3s")
-	r.zone = flgs.StringP("zone", "z", "", "display the epoch in a specific time zone")
+	r.delta = flgs.StringP("delta", "d", "", "a duration in which to modify the epoch (ex:+2h3s) see https://golang.org/pkg/time/#ParseDuration")
+	r.zone = flgs.StringP("zone", "z", "", "display a specific time zone by tz database name see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones")
 }
 
 // options retrieves command input options
