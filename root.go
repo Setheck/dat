@@ -198,6 +198,14 @@ func BuildOutput(tm time.Time, opts options) string {
 		outFormat = opts.Format
 	}
 
+	var formattedZone string
+	if opts.Zone != "" {
+		loc, err := time.LoadLocation(opts.Zone)
+		if err == nil {
+			formattedZone = FormatOutput(tm.In(loc), outFormat)
+		}
+	}
+
 	switch {
 	case opts.All:
 		output += fmt.Sprintln("epoch:", intTime)
@@ -205,21 +213,28 @@ func BuildOutput(tm time.Time, opts options) string {
 	case opts.Local && opts.UTC:
 		output += fmt.Sprintln("local:", FormatOutput(tm.Local(), outFormat))
 		output += fmt.Sprintln("  utc:", FormatOutput(tm.UTC(), outFormat))
+		if formattedZone != "" {
+			output += fmt.Sprintln(" zone:", formattedZone)
+		}
+
+	case opts.Local && formattedZone != "":
+		output += fmt.Sprintln("local:", FormatOutput(tm.Local(), outFormat))
+		output += fmt.Sprintln(" zone:", formattedZone)
+
+	case opts.UTC && formattedZone != "":
+		output += fmt.Sprintln("  utc:", FormatOutput(tm.UTC(), outFormat))
+		output += fmt.Sprintln(" zone:", formattedZone)
+
 	default:
 		out := strconv.FormatInt(intTime, 10)
 		if opts.Local {
 			out = FormatOutput(tm.Local(), outFormat)
 		} else if opts.UTC {
 			out = FormatOutput(tm.UTC(), outFormat)
+		} else if formattedZone != "" {
+			out = formattedZone
 		}
 		output = fmt.Sprintln(out)
-	}
-
-	if opts.Zone != "" {
-		loc, err := time.LoadLocation(opts.Zone)
-		if err == nil {
-			output += fmt.Sprintln(" zone:", FormatOutput(tm.In(loc), outFormat))
-		}
 	}
 
 	return output
