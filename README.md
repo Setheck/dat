@@ -21,7 +21,7 @@ Flags:
   -p, --paste           read input from clipboard
   -u, --utc             display the epoch in utc
   -v, --version         print version and exit
-  -z, --zone string     specify a timezone as an extra output
+  -z, --zone string     display the epoch in a specific time zone
 ```
 
 # install

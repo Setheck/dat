@@ -89,7 +89,7 @@ func (r *RootCommand) ParseFlags() {
 	r.milliseconds = flgs.BoolP("milliseconds", "m", false, "epochs in milliseconds")
 	r.format = flgs.StringP("format", "f", "", "https://golang.org/pkg/time/ format for time output including constant names")
 	r.delta = flgs.StringP("delta", "d", "", "a duration in which to modify the epoch ex:+2h3s")
-	r.zone = flgs.StringP("zone", "z", "", "specify a timezone as an extra output")
+	r.zone = flgs.StringP("zone", "z", "", "display the epoch in a specific time zone")
 }
 
 // options retrieves command input options
