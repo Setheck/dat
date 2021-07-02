@@ -13,8 +13,8 @@ Usage:
 Flags:
   -a, --all             display the epoch in all formats
   -c, --copy            add output to clipboard
-  -d, --delta string    a duration in which to modify the epoch ex:+2h3s.
-  -f, --format string   https://golang.org/pkg/time/ format for time output including constant names.
+  -d, --delta string    a duration in which to modify the epoch ex:+2h3s
+  -f, --format string   https://golang.org/pkg/time/ format for time output including constant names
   -h, --help            help for dat
   -l, --local           display the epoch in the local timezone
   -m, --milliseconds    epochs in milliseconds

@@ -72,8 +72,8 @@ func (r *RootCommand) ParseFlags() {
 	r.copy = flgs.BoolP("copy", "c", false, "add output to clipboard")
 	r.paste = flgs.BoolP("paste", "p", false, "read input from clipboard")
 	r.milliseconds = flgs.BoolP("milliseconds", "m", false, "epochs in milliseconds")
-	r.format = flgs.StringP("format", "f", "", "https://golang.org/pkg/time/ format for time output including constant names.")
-	r.delta = flgs.StringP("delta", "d", "", "a duration in which to modify the epoch ex:+2h3s.")
+	r.format = flgs.StringP("format", "f", "", "https://golang.org/pkg/time/ format for time output including constant names")
+	r.delta = flgs.StringP("delta", "d", "", "a duration in which to modify the epoch ex:+2h3s")
 }
 
 // options retrieves command input options
