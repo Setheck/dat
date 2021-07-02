@@ -44,6 +44,21 @@ type RootCommand struct {
 	milliseconds *bool
 	format       *string
 	delta        *string
+	zone         *string
+}
+
+// options
+type options struct {
+	Version      bool
+	Copy         bool
+	Paste        bool
+	All          bool
+	Local        bool
+	UTC          bool
+	Milliseconds bool
+	Format       string
+	Delta        string
+	Zone         string
 }
 
 // NewRootCommand creates a new instance of a RootCommand
@@ -56,7 +71,7 @@ when called without arguments dat returns the current epoch.
 Likewise, if an epoch is not given the current epoch is assumed.`),
 		SilenceUsage: true, // prevent usage on error
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return RunE(rc.Options(), args)
+			return RunE(rc.options(), args)
 		},
 	}
 	return rc
@@ -74,10 +89,11 @@ func (r *RootCommand) ParseFlags() {
 	r.milliseconds = flgs.BoolP("milliseconds", "m", false, "epochs in milliseconds")
 	r.format = flgs.StringP("format", "f", "", "https://golang.org/pkg/time/ format for time output including constant names")
 	r.delta = flgs.StringP("delta", "d", "", "a duration in which to modify the epoch ex:+2h3s")
+	r.zone = flgs.StringP("zone", "z", "", "specify a timezone as an extra output")
 }
 
 // options retrieves command input options
-func (r *RootCommand) Options() options {
+func (r *RootCommand) options() options {
 	return options{
 		Version:      *r.ver,
 		Copy:         *r.copy,
@@ -88,6 +104,7 @@ func (r *RootCommand) Options() options {
 		Milliseconds: *r.milliseconds,
 		Format:       *r.format,
 		Delta:        *r.delta,
+		Zone:         *r.zone,
 	}
 }
 
@@ -99,6 +116,7 @@ func (r *RootCommand) Execute() error {
 // test points
 var stdOut io.Writer = os.Stdout
 var buildOutput = BuildOutput
+
 var timeNow = time.Now
 
 var banner = strings.ReplaceAll(`      _       _   
@@ -164,19 +182,6 @@ func RunE(opts options, args []string) error {
 	return err
 }
 
-// options
-type options struct {
-	Version      bool
-	Copy         bool
-	Paste        bool
-	All          bool
-	Local        bool
-	UTC          bool
-	Milliseconds bool
-	Format       string
-	Delta        string
-}
-
 // BuildOutput returns the output of the time for the given options
 func BuildOutput(tm time.Time, opts options) string {
 	output := ""
@@ -209,6 +214,14 @@ func BuildOutput(tm time.Time, opts options) string {
 		}
 		output = fmt.Sprintln(out)
 	}
+
+	if opts.Zone != "" {
+		loc, err := time.LoadLocation(opts.Zone)
+		if err == nil {
+			output += fmt.Sprintln(" zone:", FormatOutput(tm.In(loc), outFormat))
+		}
+	}
+
 	return output
 }
 

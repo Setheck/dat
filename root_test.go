@@ -12,6 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	tzLosAngeles = "America/Los_Angeles"
+)
+
 func TestNewRootCommand(t *testing.T) {
 	rc := NewRootCommand()
 	assert.NotNil(t, rc)
@@ -58,6 +62,10 @@ func TestRootCommand_ParseFlags(t *testing.T) {
 	// delta
 	assert.NotNil(t, fset.ShorthandLookup("d"))
 	assert.NotNil(t, fset.Lookup("delta"))
+
+	// zone
+	assert.NotNil(t, fset.ShorthandLookup("z"))
+	assert.NotNil(t, fset.Lookup("zone"))
 }
 
 func TestRootCommand_Options(t *testing.T) {
@@ -80,6 +88,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 				delta:        StfPtr(t, ""),
+				zone:         StfPtr(t, ""),
 			},
 			options{Version: truePtr}},
 		{"copy flag",
@@ -93,6 +102,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 				delta:        StfPtr(t, ""),
+				zone:         StfPtr(t, ""),
 			},
 			options{Copy: truePtr}},
 		{"paste flag",
@@ -106,6 +116,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 				delta:        StfPtr(t, ""),
+				zone:         StfPtr(t, ""),
 			},
 			options{Paste: truePtr}},
 		{"all flag",
@@ -119,6 +130,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 				delta:        StfPtr(t, ""),
+				zone:         StfPtr(t, ""),
 			},
 			options{All: truePtr}},
 		{"local flag",
@@ -132,6 +144,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 				delta:        StfPtr(t, ""),
+				zone:         StfPtr(t, ""),
 			},
 			options{Local: truePtr}},
 		{"utc flag",
@@ -145,6 +158,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 				delta:        StfPtr(t, ""),
+				zone:         StfPtr(t, ""),
 			},
 			options{UTC: truePtr}},
 		{"m flag",
@@ -158,6 +172,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &truePtr,
 				format:       StfPtr(t, ""),
 				delta:        StfPtr(t, ""),
+				zone:         StfPtr(t, ""),
 			},
 			options{Milliseconds: truePtr}},
 		{"f flag",
@@ -171,6 +186,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, time.RFC3339),
 				delta:        StfPtr(t, ""),
+				zone:         StfPtr(t, ""),
 			},
 			options{Format: time.RFC3339}},
 		{"d flag",
@@ -184,12 +200,27 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 				delta:        StfPtr(t, "360h10m"),
+				zone:         StfPtr(t, ""),
 			},
 			options{Delta: "360h10m"}},
+		{"z flag",
+			&RootCommand{
+				ver:          &falsePtr,
+				local:        &falsePtr,
+				utc:          &falsePtr,
+				all:          &falsePtr,
+				copy:         &falsePtr,
+				paste:        &falsePtr,
+				milliseconds: &falsePtr,
+				format:       StfPtr(t, ""),
+				delta:        StfPtr(t, ""),
+				zone:         StfPtr(t, "America/Los_Angeles"),
+			},
+			options{Zone: "America/Los_Angeles"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := test.rc.Options()
+			got := test.rc.options()
 			assert.Equal(t, test.want, got)
 		})
 	}
@@ -269,6 +300,10 @@ func TestRootCommand_BuildOutput(t *testing.T) {
 	tm := time.Now()
 	tmStr := strconv.FormatInt(tm.Unix(), 10)
 	tmStrMillis := strconv.FormatInt(tm.UnixNano()/int64(time.Millisecond), 10)
+	laZone, err := time.LoadLocation(tzLosAngeles)
+	if err != nil {
+		t.Fatal(err)
+	}
 	tests := []struct {
 		name         string
 		time         time.Time
@@ -276,25 +311,35 @@ func TestRootCommand_BuildOutput(t *testing.T) {
 		local        bool
 		utc          bool
 		milliseconds bool
+		zone         string
 		format       string
 		want         string
 	}{
-		{"no flags", tm, false, false, false, false, "", fmt.Sprintln(tmStr)},
-		{"milliseconds", tm, false, false, false, true, "", fmt.Sprintln(tmStrMillis)},
-		{"utc", tm, false, false, true, false, "", fmt.Sprintln(tm.UTC().Format(DateFormat))},
-		{"local", tm, false, true, false, false, "", fmt.Sprintln(tm.Local().Format(DateFormat))},
+		{"no flags", tm, false, false, false, false, "", "", fmt.Sprintln(tmStr)},
+		{"milliseconds", tm, false, false, false, true, "", "", fmt.Sprintln(tmStrMillis)},
+		{"utc", tm, false, false, true, false, "", "", fmt.Sprintln(tm.UTC().Format(DateFormat))},
+		{"local", tm, false, true, false, false, "", "", fmt.Sprintln(tm.Local().Format(DateFormat))},
 		{"utc and local", tm, false, true, true, false,
-			"", fmt.Sprintf("local: %s\n  utc: %s\n",
+			"", "", fmt.Sprintf("local: %s\n  utc: %s\n",
 				tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
-		{"all", tm, true, false, false, false, "",
+		{"all", tm, true, false, false, false, "", "",
 			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n",
 				tm.Unix(), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
-		{"ms all", tm, true, false, false, true, "",
+		{"all with zone", tm, true, false, false, false, tzLosAngeles, "",
+			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n zone: %s\n",
+				tm.Unix(), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat), tm.In(laZone).Format(DateFormat))},
+		{"ms all", tm, true, false, false, true, "", "",
 			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n",
 				tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
-		{"ms all with format", tm, true, false, false, true, "rfc3339",
+		{"ms all with zone", tm, true, false, false, true, tzLosAngeles, "",
+			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n zone: %s\n",
+				tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat), tm.In(laZone).Format(DateFormat))},
+		{"ms all with format", tm, true, false, false, true, "", "rfc3339",
 			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n",
 				tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(time.RFC3339), tm.UTC().Format(time.RFC3339))},
+		{"ms all with format and zone", tm, true, false, false, true, tzLosAngeles, "rfc3339",
+			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n zone: %s\n",
+				tm.UnixNano()/int64(time.Millisecond), tm.Local().Format(time.RFC3339), tm.UTC().Format(time.RFC3339), tm.In(laZone).Format(time.RFC3339))},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -303,6 +348,7 @@ func TestRootCommand_BuildOutput(t *testing.T) {
 				Local:        test.local,
 				UTC:          test.utc,
 				Milliseconds: test.milliseconds,
+				Zone:         test.zone,
 				Format:       test.format,
 			}
 			got := BuildOutput(test.time, opts)
@@ -313,9 +359,9 @@ func TestRootCommand_BuildOutput(t *testing.T) {
 
 func TestParseEpochTime(t *testing.T) {
 	timeEpoch := int64(1572762509)
-	timeEpochMs := int64(1572762509000)
-	tmstr := strconv.FormatInt(timeEpoch, 10)
-	tmstrMs := strconv.FormatInt(timeEpochMs, 10)
+	timeEpochMillis := int64(1572762509000)
+	tmStr := strconv.FormatInt(timeEpoch, 10)
+	tmStrMillis := strconv.FormatInt(timeEpochMillis, 10)
 	tests := []struct {
 		name           string
 		str            string
@@ -324,8 +370,8 @@ func TestParseEpochTime(t *testing.T) {
 		error          bool
 	}{
 		{"can't parse", "qqqqqq", false, time.Time{}, true},
-		{"parsed", tmstr, false, time.Unix(timeEpoch, 0), false},
-		{"parsed", tmstrMs, true, time.Unix(0, timeEpochMs*int64(time.Millisecond)), false},
+		{"parsed", tmStr, false, time.Unix(timeEpoch, 0), false},
+		{"parsed", tmStrMillis, true, time.Unix(0, timeEpochMillis*int64(time.Millisecond)), false},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
