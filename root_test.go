@@ -7,9 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/spf13/pflag"
-
 	"github.com/Setheck/dat/mocks"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -64,7 +63,7 @@ func TestRootCommand_Options(t *testing.T) {
 	tests := []struct {
 		name string
 		rc   *RootCommand
-		want Options
+		want options
 	}{
 		{"version flag",
 			&RootCommand{
@@ -77,7 +76,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 			},
-			Options{Version: truePtr}},
+			options{Version: truePtr}},
 		{"copy flag",
 			&RootCommand{
 				ver:          &falsePtr,
@@ -89,7 +88,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 			},
-			Options{Copy: truePtr}},
+			options{Copy: truePtr}},
 		{"paste flag",
 			&RootCommand{
 				ver:          &falsePtr,
@@ -101,7 +100,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 			},
-			Options{Paste: truePtr}},
+			options{Paste: truePtr}},
 		{"all flag",
 			&RootCommand{
 				ver:          &falsePtr,
@@ -113,7 +112,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 			},
-			Options{All: truePtr}},
+			options{All: truePtr}},
 		{"local flag",
 			&RootCommand{
 				ver:          &falsePtr,
@@ -125,7 +124,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 			},
-			Options{Local: truePtr}},
+			options{Local: truePtr}},
 		{"utc flag",
 			&RootCommand{
 				ver:          &falsePtr,
@@ -137,7 +136,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, ""),
 			},
-			Options{UTC: truePtr}},
+			options{UTC: truePtr}},
 		{"m flag",
 			&RootCommand{
 				ver:          &falsePtr,
@@ -149,7 +148,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &truePtr,
 				format:       StfPtr(t, ""),
 			},
-			Options{Milliseconds: truePtr}},
+			options{Milliseconds: truePtr}},
 		{"f flag",
 			&RootCommand{
 				ver:          &falsePtr,
@@ -161,7 +160,7 @@ func TestRootCommand_Options(t *testing.T) {
 				milliseconds: &falsePtr,
 				format:       StfPtr(t, time.RFC3339),
 			},
-			Options{Format: time.RFC3339}},
+			options{Format: time.RFC3339}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -183,17 +182,17 @@ func TestRootCommand_Execute(t *testing.T) {
 
 func TestRunInit(t *testing.T) {
 	saveClipboard := ClipboardHelper
-	saveStdOut := StdOut
+	saveStdOut := stdOut
 	saveBuildOutput := buildOutput
 	saveTimeNow := timeNow
 	defer func() {
 		ClipboardHelper = saveClipboard
-		StdOut = saveStdOut
+		stdOut = saveStdOut
 		buildOutput = saveBuildOutput
 		timeNow = saveTimeNow
 	}()
 	testOutput := "fake output data"
-	buildOutput = func(tm time.Time, opts Options) string {
+	buildOutput = func(tm time.Time, opts options) string {
 		return testOutput
 	}
 	testTime := time.Unix(1601167426, 0)
@@ -206,25 +205,25 @@ func TestRunInit(t *testing.T) {
 	tests := []struct {
 		name         string
 		args         []string
-		options      Options
+		options      options
 		want         string
 		clipboardErr error
 		epochErr     error
 	}{
-		{"version", nil, Options{Version: true}, fmt.Sprintf("%s\napp:     dat\nversion: v0.0.0\nbuilt:   2019-11-02T01:23:46-0700\n", Banner), nil, nil},
-		{"no args", nil, Options{}, testOutput, nil, nil},
-		{"with input", []string{goodEpoch}, Options{}, testOutput, nil, nil},
-		{"millisecond input", nil, Options{Milliseconds: true}, testOutput, nil, nil},
-		{"input bad epoch", []string{"asdf"}, Options{}, testOutput, nil, assert.AnError},
-		{"read from clipboard", nil, Options{Paste: true}, testOutput, nil, nil},
-		{"read from clipboard error", nil, Options{Paste: true}, testOutput, assert.AnError, nil},
-		{"copy to clipboard", nil, Options{Copy: true}, testOutput, nil, nil},
-		{"copy to clipboard error", nil, Options{Copy: true}, testOutput, assert.AnError, nil},
+		{"version", nil, options{Version: true}, fmt.Sprintf("%s\napp:     dat\nversion: v0.0.0\nbuilt:   2019-11-02T01:23:46-0700\n", banner), nil, nil},
+		{"no args", nil, options{}, testOutput, nil, nil},
+		{"with input", []string{goodEpoch}, options{}, testOutput, nil, nil},
+		{"millisecond input", nil, options{Milliseconds: true}, testOutput, nil, nil},
+		{"input bad epoch", []string{"asdf"}, options{}, testOutput, nil, assert.AnError},
+		{"read from clipboard", nil, options{Paste: true}, testOutput, nil, nil},
+		{"read from clipboard error", nil, options{Paste: true}, testOutput, assert.AnError, nil},
+		{"copy to clipboard", nil, options{Copy: true}, testOutput, nil, nil},
+		{"copy to clipboard error", nil, options{Copy: true}, testOutput, assert.AnError, nil},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			outputBuffer := new(bytes.Buffer)
-			StdOut = outputBuffer
+			stdOut = outputBuffer
 
 			mockClipper := new(mocks.Clipper)
 			mockClipper.On("ReadAll").Return(goodEpoch, test.clipboardErr)
@@ -243,8 +242,8 @@ func TestRunInit(t *testing.T) {
 
 func TestRootCommand_BuildOutput(t *testing.T) {
 	tm := time.Now()
-	tmstr := strconv.FormatInt(tm.Unix(), 10)
-	tmstr_ms := strconv.FormatInt(tm.UnixNano()/int64(time.Millisecond), 10)
+	tmStr := strconv.FormatInt(tm.Unix(), 10)
+	tmStrMillis := strconv.FormatInt(tm.UnixNano()/int64(time.Millisecond), 10)
 	tests := []struct {
 		name         string
 		time         time.Time
@@ -255,8 +254,8 @@ func TestRootCommand_BuildOutput(t *testing.T) {
 		format       string
 		want         string
 	}{
-		{"no flags", tm, false, false, false, false, "", fmt.Sprintln(tmstr)},
-		{"milliseconds", tm, false, false, false, true, "", fmt.Sprintln(tmstr_ms)},
+		{"no flags", tm, false, false, false, false, "", fmt.Sprintln(tmStr)},
+		{"milliseconds", tm, false, false, false, true, "", fmt.Sprintln(tmStrMillis)},
 		{"utc", tm, false, false, true, false, "", fmt.Sprintln(tm.UTC().Format(DateFormat))},
 		{"local", tm, false, true, false, false, "", fmt.Sprintln(tm.Local().Format(DateFormat))},
 		{"utc and local", tm, false, true, true, false,
@@ -274,7 +273,7 @@ func TestRootCommand_BuildOutput(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			opts := Options{
+			opts := options{
 				All:          test.all,
 				Local:        test.local,
 				UTC:          test.utc,

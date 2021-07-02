@@ -13,9 +13,12 @@ import (
 )
 
 var (
+	// Application name
 	Application = "dat"
-	Version     = "v0.0.0"
-	Built       = "2019-11-02T01:23:46-0700"
+	// Version stamp
+	Version = "v0.0.0"
+	// Built date/time
+	Built = "2019-11-02T01:23:46-0700"
 )
 
 const DateFormat = "01/02/2006 15:04:05 -0700"
@@ -71,9 +74,9 @@ func (r *RootCommand) ParseFlags() {
 	r.format = flgs.StringP("format", "f", "", "https://golang.org/pkg/time/ format for time output including constant names.")
 }
 
-// Options retrieves command input options
-func (r *RootCommand) Options() Options {
-	return Options{
+// options retrieves command input options
+func (r *RootCommand) Options() options {
+	return options{
 		Version:      *r.ver,
 		Copy:         *r.copy,
 		Paste:        *r.paste,
@@ -91,11 +94,11 @@ func (r *RootCommand) Execute() error {
 }
 
 // test points
-var StdOut io.Writer = os.Stdout
+var stdOut io.Writer = os.Stdout
 var buildOutput = BuildOutput
 var timeNow = time.Now
 
-var Banner = strings.ReplaceAll(`      _       _   
+var banner = strings.ReplaceAll(`      _       _   
      | |     | |  
    __| | __ _| |_ 
   / _q |/ _q | __|
@@ -103,12 +106,12 @@ var Banner = strings.ReplaceAll(`      _       _
   \__,_|\__,_|\__|`, "q", "`")
 
 // RunE is the command run function
-func RunE(opts Options, args []string) error {
+func RunE(opts options, args []string) error {
 	if opts.Version {
-		fmt.Fprintln(StdOut, Banner)
-		fmt.Fprintln(StdOut, "app:    ", Application)
-		fmt.Fprintln(StdOut, "version:", Version)
-		fmt.Fprintln(StdOut, "built:  ", Built)
+		fmt.Fprintln(stdOut, banner)
+		fmt.Fprintln(stdOut, "app:    ", Application)
+		fmt.Fprintln(stdOut, "version:", Version)
+		fmt.Fprintln(stdOut, "built:  ", Built)
 		return nil
 	}
 
@@ -148,12 +151,12 @@ func RunE(opts Options, args []string) error {
 		}
 	}
 
-	_, err = fmt.Fprint(StdOut, output)
+	_, err = fmt.Fprint(stdOut, output)
 	return err
 }
 
-// Options
-type Options struct {
+// options
+type options struct {
 	Version      bool
 	Copy         bool
 	Paste        bool
@@ -165,7 +168,7 @@ type Options struct {
 }
 
 // BuildOutput returns the output of the time for the given options
-func BuildOutput(tm time.Time, opts Options) string {
+func BuildOutput(tm time.Time, opts options) string {
 	output := ""
 
 	var intTime int64
@@ -199,6 +202,8 @@ func BuildOutput(tm time.Time, opts Options) string {
 	return output
 }
 
+// FormatOutput parses the provided time against the provided format string.
+// replacing named constants with the expected format.
 func FormatOutput(tm time.Time, outFmtS string) string {
 	outFmt := outFmtS
 	switch strings.ToLower(outFmtS) {
