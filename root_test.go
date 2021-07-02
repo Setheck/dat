@@ -369,6 +369,7 @@ func TestFormatOutput(t *testing.T) {
 		{"StampMicro", testTime, "StampMicro", testTime.Format(time.StampMicro)},
 		{"StampNano", testTime, "StampNano", testTime.Format(time.StampNano)},
 		{"other format", testTime, "Jan 15:05:04 MST -700 2006", testTime.Format("Jan 15:05:04 MST -700 2006")},
+		{"unknown format", testTime, "NoTaGoOdFoRmAt", testTime.Format(DateFormat)},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -234,6 +234,11 @@ func FormatOutput(tm time.Time, outFmtS string) string {
 		outFmt = time.StampNano
 	}
 
+	formattedTime := tm.Format(outFmt)
+	if formattedTime == outFmt {
+		outFmt = DateFormat
+	}
+
 	return tm.Format(outFmt)
 }
 
