@@ -24,8 +24,6 @@ Flags:
   -z, --zone string     display a specific time zone by tz database name see: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 ```
 
-
-
 # install
 See [Releases Page](https://github.com/Setheck/dat/releases) for the latest release prebuilt binaries.
 
