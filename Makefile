@@ -1,18 +1,19 @@
 BINARY=dat
 VERSION=$(shell git describe --tags)
 BUILT=$(shell date +%FT%T%z)
-BASE_PKG:=main
+BUILD_PKG:=github.com/Setheck/dat/pkg/build
+
 
 CGO_ENABLED?=0
 LDFLAGS=-ldflags "-extldflags '-static' -w -s \
-				-X ${BASE_PKG}.Application=${BINARY} \
-				-X ${BASE_PKG}.Version=${VERSION} \
-				-X ${BASE_PKG}.Built=${BUILT}"
+				-X ${BUILD_PKG}.Application=${BINARY} \
+				-X ${BUILD_PKG}.Version=${VERSION} \
+				-X ${BUILD_PKG}.Built=${BUILT}"
 
 build:
 	@echo "CGO_ENABLED=$(CGO_ENABLED)"
 	@echo "building ${BINARY} version:${VERSION} built:${BUILT}"
-	@go build -a ${LDFLAGS} -o ${BINARY} .
+	cd cmd/dat && go build -a ${LDFLAGS} -o ../../bin/${BINARY} .
 
 test:
 	go test ./... -cover
@@ -28,7 +29,6 @@ release:
 
 
 clean:
-	@if [ -f ${BINARY} ] ; then echo "Removing ${BINARY}"; rm ${BINARY} ; fi
-	@if [ -d dist ]; then echo "Removing dist/..."; rm -rf dist; fi
+	@if [ -d bin ]; then echo "Removing bin/..."; rm -rf bin; fi
 
 .PHONY: clean install test dbuild deploy
