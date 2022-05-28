@@ -7,10 +7,8 @@ import (
 	"testing"
 	"time"
 
-	main2 "github.com/Setheck/dat/pkg/clipper"
-
-	mocks2 "github.com/Setheck/dat/pkg/mocks"
-
+	"github.com/Setheck/dat/pkg/clipper"
+	"github.com/Setheck/dat/pkg/mocks"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
@@ -28,7 +26,7 @@ func TestNewRootCommand(t *testing.T) {
 
 func TestRootCommand_ParseFlags(t *testing.T) {
 	fset := &pflag.FlagSet{}
-	mockCommand := new(mocks2.CobraCommand)
+	mockCommand := new(mocks.CobraCommand)
 	mockCommand.On("Flags").Return(fset)
 	rc := &RootCommand{cmd: mockCommand}
 	rc.ParseFlags()
@@ -230,7 +228,7 @@ func TestRootCommand_Options(t *testing.T) {
 }
 
 func TestRootCommand_Execute(t *testing.T) {
-	cmdMock := new(mocks2.CobraCommand)
+	cmdMock := new(mocks.CobraCommand)
 	cmdMock.On("Execute").Return(nil)
 
 	rc := &RootCommand{cmd: cmdMock}
@@ -240,12 +238,12 @@ func TestRootCommand_Execute(t *testing.T) {
 }
 
 func TestRunInit(t *testing.T) {
-	saveClipboard := main2.ClipboardHelper
+	saveClipboard := clipper.ClipboardHelper
 	saveStdOut := stdOut
 	saveBuildOutput := buildOutput
 	saveTimeNow := timeNow
 	defer func() {
-		main2.ClipboardHelper = saveClipboard
+		clipper.ClipboardHelper = saveClipboard
 		stdOut = saveStdOut
 		buildOutput = saveBuildOutput
 		timeNow = saveTimeNow
@@ -284,10 +282,10 @@ func TestRunInit(t *testing.T) {
 			outputBuffer := new(bytes.Buffer)
 			stdOut = outputBuffer
 
-			mockClipper := new(mocks2.Clipper)
+			mockClipper := new(mocks.Clipper)
 			mockClipper.On("ReadAll").Return(goodEpoch, test.clipboardErr)
 			mockClipper.On("WriteAll", testOutput).Return(test.clipboardErr)
-			main2.ClipboardHelper = mockClipper
+			clipper.ClipboardHelper = mockClipper
 
 			err := RunE(test.options, test.args)
 			if test.clipboardErr != nil || test.epochErr != nil {
