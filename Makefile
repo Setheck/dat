@@ -19,7 +19,7 @@ test:
 	go test ./... -cover
 
 install: test build
-	go install ${LDFLAGS} .
+	cd cmd/dat && go install ${LDFLAGS} .
 
 release: RELEASE_VERSION=v$(shell docker run --rm alpine/semver semver -c -i patch $(VERSION))
 release:
