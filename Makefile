@@ -13,13 +13,14 @@ LDFLAGS=-ldflags "-extldflags '-static' -w -s \
 build:
 	@echo "CGO_ENABLED=$(CGO_ENABLED)"
 	@echo "building ${BINARY} version:${VERSION} built:${BUILT}"
-	cd cmd/dat && go build -a ${LDFLAGS} -o ../../bin/${BINARY} .
+	@cd cmd/dat && go build -a ${LDFLAGS} -o ../../bin/${BINARY} .
 
 test:
 	go test ./... -cover
 
 install: test build
-	cd cmd/dat && go install ${LDFLAGS} .
+	@echo "installing ${BINARY}"
+	@cd cmd/dat && go install ${LDFLAGS} .
 
 release: RELEASE_VERSION=v$(shell docker run --rm alpine/semver semver -c -i patch $(VERSION))
 release:
