@@ -8,17 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Setheck/dat/pkg/build"
+	"github.com/Setheck/dat/pkg/clipper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-)
-
-var (
-	// Application name
-	Application = "dat"
-	// Version stamp
-	Version = "v0.0.0"
-	// Built date/time
-	Built = "2019-11-02T01:23:46-0700"
 )
 
 const DateFormat = "01/02/2006 15:04:05 -0700"
@@ -65,8 +58,8 @@ type options struct {
 func NewRootCommand() *RootCommand {
 	rc := &RootCommand{}
 	rc.cmd = &cobra.Command{
-		Use: fmt.Sprint(Application, " [epoch]"),
-		Long: fmt.Sprint(Application, ` is a simple tool for converting epochs,
+		Use: fmt.Sprint(build.Application, " [epoch]"),
+		Long: fmt.Sprint(build.Application, ` is a simple tool for converting epochs,
 when called without arguments dat returns the current epoch.
 Likewise, if an epoch is not given the current epoch is assumed.`),
 		SilenceUsage: true, // prevent usage on error
@@ -130,9 +123,9 @@ var banner = strings.ReplaceAll(`      _       _
 func RunE(opts options, args []string) error {
 	if opts.Version {
 		fmt.Fprintln(stdOut, banner)
-		fmt.Fprintln(stdOut, "app:    ", Application)
-		fmt.Fprintln(stdOut, "version:", Version)
-		fmt.Fprintln(stdOut, "built:  ", Built)
+		fmt.Fprintln(stdOut, "app:    ", build.Application)
+		fmt.Fprintln(stdOut, "version:", build.Version)
+		fmt.Fprintln(stdOut, "built:  ", build.Built)
 		return nil
 	}
 
@@ -154,7 +147,7 @@ func RunE(opts options, args []string) error {
 	// paste mode reads from the clipboard
 	if opts.Paste {
 		var err error
-		epochstr, err = ClipboardHelper.ReadAll()
+		epochstr, err = clipper.ClipboardHelper.ReadAll()
 		if err != nil {
 			return err
 		}
@@ -168,7 +161,7 @@ func RunE(opts options, args []string) error {
 
 	output := buildOutput(tm, opts)
 	if opts.Copy {
-		if err := ClipboardHelper.WriteAll(strings.TrimSpace(output)); err != nil {
+		if err := clipper.ClipboardHelper.WriteAll(strings.TrimSpace(output)); err != nil {
 			return err
 		}
 	}
