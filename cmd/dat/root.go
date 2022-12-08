@@ -16,6 +16,25 @@ import (
 
 const DateFormat = "01/02/2006 15:04:05 -0700"
 
+var supportedTimeFormats = map[string]string{
+	// format: name
+	time.ANSIC:       "ANSIC",
+	time.UnixDate:    "UnixDate",
+	time.RubyDate:    "RubyDate",
+	time.RFC822:      "RFC822",
+	time.RFC822Z:     "RFC822Z",
+	time.RFC850:      "RFC850",
+	time.RFC1123:     "RFC1123",
+	time.RFC1123Z:    "RFC1123Z",
+	time.RFC3339:     "RFC3339",
+	time.RFC3339Nano: "RFC3339Nano",
+	time.Kitchen:     "Kitchen",
+	time.Stamp:       "Stamp",
+	time.StampMilli:  "StampMilli",
+	time.StampMicro:  "StampMicro",
+	time.StampNano:   "StampNano",
+}
+
 // CobraCommand interface for *cobra.Command
 type CobraCommand interface {
 	Execute() error
@@ -38,6 +57,7 @@ type RootCommand struct {
 	format       *string
 	delta        *string
 	zone         *string
+	tf           *bool
 }
 
 // options
@@ -52,6 +72,7 @@ type options struct {
 	Format       string
 	Delta        string
 	Zone         string
+	Tf           bool
 }
 
 // NewRootCommand creates a new instance of a RootCommand
@@ -83,6 +104,7 @@ func (r *RootCommand) ParseFlags() {
 	r.format = flgs.StringP("format", "f", "", "https://golang.org/pkg/time/ format for time output including constant names")
 	r.delta = flgs.StringP("delta", "d", "", "a duration in which to modify the epoch (ex:+2h3s) see https://golang.org/pkg/time/#ParseDuration")
 	r.zone = flgs.StringP("zone", "z", "", "display a specific time zone by tz database name see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones")
+	r.tf = flgs.BoolP("tf", "t", false, "attempt to parse input as a known time format")
 }
 
 // options retrieves command input options
@@ -98,6 +120,7 @@ func (r *RootCommand) options() options {
 		Format:       *r.format,
 		Delta:        *r.delta,
 		Zone:         *r.zone,
+		Tf:           *r.tf,
 	}
 }
 
@@ -120,7 +143,7 @@ var banner = strings.ReplaceAll(`      _       _
   \__,_|\__,_|\__|`, "q", "`")
 
 // RunE is the command run function
-func RunE(opts options, args []string) error {
+func RunE(opts options, args []string) (err error) {
 	if opts.Version {
 		fmt.Fprintln(stdOut, banner)
 		fmt.Fprintln(stdOut, "app:    ", build.Application)
@@ -133,7 +156,7 @@ func RunE(opts options, args []string) error {
 	var epocInt int64
 	epoch := timeNow()
 	if opts.Milliseconds {
-		epocInt = epoch.UnixNano() / int64(time.Millisecond)
+		epocInt = epoch.UnixMilli()
 	} else {
 		epocInt = epoch.Unix()
 	}
@@ -153,10 +176,27 @@ func RunE(opts options, args []string) error {
 		}
 	}
 
-	// validate and convert to time
-	tm, err := ParseEpochTime(epochstr, opts.Milliseconds)
-	if err != nil {
-		return err
+	var (
+		tm     time.Time
+		format string
+	)
+	if opts.Tf {
+		tm, format, err = ParseTime(epochstr)
+		if err != nil {
+			return err
+		}
+		if name, ok := supportedTimeFormats[format]; ok {
+			fmt.Println("detected format:", name)
+		} else {
+			fmt.Println("failed to detect format.")
+		}
+		return nil
+	} else {
+		// validate and convert to time
+		tm, err = ParseEpochTime(epochstr, opts.Milliseconds)
+		if err != nil {
+			return err
+		}
 	}
 
 	output := buildOutput(tm, opts)
@@ -181,7 +221,7 @@ func BuildOutput(tm time.Time, opts options) string {
 
 	var intTime int64
 	if opts.Milliseconds {
-		intTime = tm.UnixNano() / int64(time.Millisecond)
+		intTime = tm.UnixMilli()
 	} else {
 		intTime = tm.Unix()
 	}
@@ -248,39 +288,13 @@ func AddDelta(tm time.Time, delta string) time.Time {
 // replacing named constants with the expected format.
 func FormatOutput(tm time.Time, outFmtS string) string {
 	outFmt := outFmtS
-	switch strings.ToLower(outFmtS) {
-	case "ansic":
-		outFmt = time.ANSIC
-	case "unixdate":
-		outFmt = time.UnixDate
-	case "rubydate":
-		outFmt = time.RubyDate
-	case "rfc822":
-		outFmt = time.RFC822
-	case "rfc822z":
-		outFmt = time.RFC822Z
-	case "rfc850":
-		outFmt = time.RFC850
-	case "rfc1123":
-		outFmt = time.RFC1123
-	case "rfc1123z":
-		outFmt = time.RFC1123Z
-	case "rfc3339":
-		outFmt = time.RFC3339
-	case "rfc3339nano":
-		outFmt = time.RFC3339Nano
-	case "kitchen":
-		outFmt = time.Kitchen
-	case "stamp":
-		outFmt = time.Stamp
-	case "stampmilli":
-		outFmt = time.StampMilli
-	case "stampmicro":
-		outFmt = time.StampMicro
-	case "stampnano":
-		outFmt = time.StampNano
+	lowerFmt := strings.ToLower(outFmtS)
+	for format, name := range supportedTimeFormats {
+		if strings.ToLower(name) == lowerFmt {
+			outFmt = format
+			break
+		}
 	}
-
 	formattedTime := tm.Format(outFmt)
 	if formattedTime == outFmt {
 		outFmt = DateFormat
@@ -301,6 +315,16 @@ func ParseEpochTime(str string, milliseconds bool) (time.Time, error) {
 	}
 
 	return time.Unix(epoch, 0), nil
+}
+
+func ParseTime(str string) (time.Time, string, error) {
+	for format := range supportedTimeFormats {
+		tm, err := time.Parse(format, str)
+		if err == nil {
+			return tm, format, nil
+		}
+	}
+	return time.Unix(0, 0), "", fmt.Errorf("invalid time format")
 }
 
 // TruncateString reduces the size of str to the given size.
