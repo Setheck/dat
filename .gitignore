@@ -15,6 +15,7 @@
 dist/
 dat
 !dat/
+bin/
 
 # Ide
 .idea
