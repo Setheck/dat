@@ -13,15 +13,16 @@ Usage:
 Flags:
   -a, --all             display the epoch and formatted local and utc values of the epoch
   -c, --copy            copy output to the clipboard
-  -d, --delta string    a duration in which to modify the epoch ex:+2h3s see https://golang.org/pkg/time/#ParseDuration
+  -d, --delta string    a duration in which to modify the epoch (ex:+2h3s) see https://golang.org/pkg/time/#ParseDuration
   -f, --format string   https://golang.org/pkg/time/ format for time output including constant names
   -h, --help            help for dat
   -l, --local           display the formatted epoch in the local timezone
   -m, --milliseconds    epochs in milliseconds
   -p, --paste           read input from the clipboard
+  -t, --tf              attempt to parse input as a known time format
   -u, --utc             display the formatted epoch in the utc timezone
   -v, --version         print version and exit
-  -z, --zone string     display a specific time zone by tz database name see: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  -z, --zone string     display a specific time zone by tz database name see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 ```
 
 # install
