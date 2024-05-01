@@ -30,8 +30,8 @@ See [Releases Page](https://github.com/Setheck/dat/releases) for the latest rele
 
 Build and install yourself!
 requires [golang](https://golang.org/doc/install)
-```
+```bash
 git clone git@github.com:Setheck/dat.git
-make install
+cd dat && make install
 ```
  
