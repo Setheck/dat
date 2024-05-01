@@ -8,10 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Setheck/dat/pkg/build"
-	"github.com/Setheck/dat/pkg/clipper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
+	"github.com/Setheck/dat/pkg/build"
+	"github.com/Setheck/dat/pkg/clipper"
 )
 
 const DateFormat = "01/02/2006 15:04:05 -0700"
@@ -73,6 +74,8 @@ type options struct {
 	Delta        string
 	Zone         string
 	Tf           bool
+
+	detectedFormat string
 }
 
 // NewRootCommand creates a new instance of a RootCommand
@@ -186,11 +189,10 @@ func RunE(opts options, args []string) (err error) {
 			return err
 		}
 		if name, ok := supportedTimeFormats[format]; ok {
-			fmt.Println("detected format:", name)
+			opts.detectedFormat = name
 		} else {
 			fmt.Println("failed to detect format.")
 		}
-		return nil
 	} else {
 		// validate and convert to time
 		tm, err = ParseEpochTime(epochstr, opts.Milliseconds)
@@ -241,6 +243,9 @@ func BuildOutput(tm time.Time, opts options) string {
 
 	switch {
 	case opts.All:
+		if opts.detectedFormat != "" {
+			output += fmt.Sprintln("detected:", opts.detectedFormat)
+		}
 		output += fmt.Sprintln("epoch:", intTime)
 		fallthrough
 	case opts.Local && opts.UTC:
