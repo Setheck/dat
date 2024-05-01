@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Setheck/dat/pkg/clipper"
-	"github.com/Setheck/dat/pkg/mocks"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/Setheck/dat/pkg/clipper"
+	"github.com/Setheck/dat/pkg/mocks"
 )
 
 const (
@@ -360,6 +361,8 @@ func TestRootCommand_BuildOutput(t *testing.T) {
 			fmt.Sprintf("local: %s\n zone: %s\n", tm.Local().Format(DateFormat), tm.In(laZone).Format(DateFormat))},
 		{"utc and local", tm, options{Local: true, UTC: true},
 			fmt.Sprintf("local: %s\n  utc: %s\n", tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
+		{"all with detection", tm, options{All: true, detectedFormat: "rfc3339"},
+			fmt.Sprintf("detected: %s\nepoch: %d\nlocal: %s\n  utc: %s\n", "rfc3339", tm.Unix(), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
 		{"all", tm, options{All: true},
 			fmt.Sprintf("epoch: %d\nlocal: %s\n  utc: %s\n", tm.Unix(), tm.Local().Format(DateFormat), tm.UTC().Format(DateFormat))},
 		{"all with zone", tm, options{All: true, Zone: tzLosAngeles},
